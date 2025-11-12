@@ -1,10 +1,10 @@
-import { View, StyleSheet } from 'react-native';
-import { VeonPrebidReactNativeView } from 'setupad-prebid-react-native';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <VeonPrebidReactNativeView color="#32a852" style={styles.box} />
+      <Text>Hello, world!</Text>
     </View>
   );
 }
@@ -12,12 +12,8 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
   },
 });
