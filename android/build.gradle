@@ -67,11 +67,24 @@ android {
 repositories {
   mavenCentral()
   google()
+
+  // JitPack repository for Veon Prebid SDK
+  maven { url 'https://jitpack.io' }
 }
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
 
 dependencies {
+  // React Native
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+  // Google Mobile Ads (AdManager)
+  implementation 'com.google.android.gms:play-services-ads:22.2.0'
+
+  // Veon Prebid SDK
+  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.0.7.7'
+  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers:0.0.7.7'
+  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.0.7.7'
+  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.0.7.7'
 }
