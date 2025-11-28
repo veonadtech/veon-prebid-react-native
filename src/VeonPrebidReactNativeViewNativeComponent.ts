@@ -1,5 +1,9 @@
 import type { ViewProps } from 'react-native';
-import { codegenNativeComponent } from 'react-native';
+import type {
+  Int32,
+  DirectEventHandler,
+} from 'react-native/Libraries/Types/CodegenTypes';
+import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
 
 /**
  * Event payload for ad events
@@ -9,11 +13,6 @@ export interface AdEventPayload {
   sdk?: string;
   message?: string;
 }
-
-/**
- * Event handler type for direct events
- */
-type DirectEventHandler<T> = (event: { nativeEvent: T }) => void;
 
 /**
  * Native Props for VeonPrebidReactNativeView
@@ -29,13 +28,13 @@ export interface NativeProps extends ViewProps {
   adUnitId?: string;
 
   /** Ad width (required for banners) */
-  width?: number;
+  width?: Int32;
 
   /** Ad height (required for banners) */
-  height?: number;
+  height?: Int32;
 
   /** Refresh interval in seconds (30-120, for banners only) */
-  refreshInterval?: number;
+  refreshInterval?: Int32;
 
   // Event handlers
   onAdLoaded?: DirectEventHandler<AdEventPayload>;
