@@ -1,6 +1,6 @@
 import type { Int32 } from 'react-native/Libraries/Types/CodegenTypes';
 
-export interface Commands {
+export interface VeonPrebidCommands {
   readonly loadBanner: Int32;
   readonly showBanner: Int32;
   readonly hideBanner: Int32;
@@ -12,7 +12,7 @@ export interface Commands {
   readonly destroyAuction: Int32;
 }
 
-export const Commands: Commands = {
+export const VeonPrebidCommands: VeonPrebidCommands = {
   loadBanner: 1,
   showBanner: 2,
   hideBanner: 3,

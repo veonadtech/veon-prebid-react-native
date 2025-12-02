@@ -40,8 +40,8 @@ export default function App() {
 
         await VeonPrebidSDK.getInstance().initialize({
           prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
-          configHost: 'https://dcdn.veonadx.com/sdk/com.veon.oq/config.json',
-          accountId: 'com.veon.oq', // Replace with your account ID
+          configHost: 'https://dcdn.veonadx.com/sdk/uz.beeline.odp/config.json',
+          accountId: 'uz.beeline.odp', // Replace with your account ID
           timeoutMillis: 3000,
           pbsDebug: __DEV__,
         });
