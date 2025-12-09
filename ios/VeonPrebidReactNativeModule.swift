@@ -45,69 +45,42 @@ class VeonPrebidReactNativeModule: RCTEventEmitter {
                 return
             }
 
-            do {
-                print("Initializing Veon Prebid SDK...")
-                print("Host: \(prebidHost)")
-                print("Config Host: \(configHost)")
-                print("Account ID: \(accountId)")
-                print("Timeout: \(timeoutMillis) ms")
-                print("Debug: \(pbsDebug)")
+            print("Initializing Veon Prebid SDK...")
+            print("Host: \(prebidHost)")
+            print("Config Host: \(configHost)")
+            print("Account ID: \(accountId)")
+            print("Timeout: \(timeoutMillis) ms")
+            print("Debug: \(pbsDebug)")
 
-                // Set Prebid account ID
-                Prebid.shared.prebidServerAccountId = accountId
+            // Set Prebid account ID
+            Prebid.shared.prebidServerAccountId = accountId
 
-                // Set Prebid server host
-                if let url = URL(string: prebidHost) {
-                    let host = PrebidHost.Custom
-                    host.name = url.host ?? prebidHost
-                    Prebid.shared.prebidServerHost = host
-                } else {
-                    throw NSError(domain: "VeonPrebid", code: -1, userInfo: [
-                        NSLocalizedDescriptionKey: "Invalid prebidHost URL"
-                    ])
-                }
+            // Set timeout (must be set before initialization)
+            Prebid.shared.timeoutMillis = timeoutMillis.intValue
 
-                // Initialize SDK with config
-                Prebid.initializeSDK(configHost) { [weak self] status in
-                    switch status {
-                    case .succeeded:
-                        print("Prebid Mobile SDK initialized successfully!")
-                        self?.isInitialized = true
-                        self?.sendEvent(withName: "prebidSdkInitialized", body: "successfully")
-                        resolve("successfully")
+            // Set debug mode
+            Prebid.shared.pbsDebug = pbsDebug
 
-                    case .serverStatusWarning(let message):
-                        print("Server status warning: \(message)")
-                        self?.isInitialized = true
-                        self?.sendEvent(withName: "prebidSdkInitialized", body: message)
-                        resolve(message)
+            // Enable geo location sharing
+            Prebid.shared.shareGeoLocation = true
+          
+          do {
+              try Prebid.initializeSDK(
+                serverURL: prebidHost,
+                  gadMobileAdsVersion: string(for: MobileAds.shared.versionNumber)
+              ) { status, error in
+                print("Prebid Mobile SDK initialized successfully!")
+                self.isInitialized = true
+                self.sendEvent(withName: "prebidSdkInitialized", body: "successfully")
+                resolve("successfully") // Return success
+              }
+          } catch {
+            let errorMessage = "Initialization failed"
+            print(errorMessage)
+            self.sendEvent(withName: "prebidSdkInitializeFailed", body: errorMessage)
+            reject("INIT_FAILED", errorMessage, nil)
+          }
 
-                    case .failed(let error):
-                        let errorMessage = "Initialization failed: \(error.localizedDescription)"
-                        print(errorMessage)
-                        self?.sendEvent(withName: "prebidSdkInitializeFailed", body: errorMessage)
-                        reject("INIT_FAILED", errorMessage, error)
-                    }
-                }
-
-                // Set timeout
-                Prebid.shared.timeoutMillis = timeoutMillis.intValue
-
-                // Set debug mode
-                Prebid.shared.pbsDebug = pbsDebug
-
-                // Enable geo location sharing
-                Prebid.shared.shareGeoLocation = true
-
-                // Initialize Google Mobile Ads
-                GADMobileAds.sharedInstance().start { status in
-                    print("Google Mobile Ads initialized")
-                }
-
-            } catch {
-                print("Error initializing Prebid SDK: \(error.localizedDescription)")
-                reject("INIT_ERROR", "Failed to initialize SDK: \(error.localizedDescription)", error)
-            }
         }
     }
 
@@ -121,7 +94,7 @@ class VeonPrebidReactNativeModule: RCTEventEmitter {
         do {
             let version = Prebid.shared.version
             resolve(version)
-        } catch {
+        } catch { 
             reject("VERSION_ERROR", "Failed to get SDK version: \(error.localizedDescription)", error)
         }
     }
