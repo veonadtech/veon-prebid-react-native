@@ -157,10 +157,10 @@ export default function App() {
                 <VeonPrebidAd
                   ref={bannerAdRef}
                   adType={AdType.BANNER}
-                  configId="beeline_uz_android_manual_prebid2_test_320x50" // Replace with your config ID
+                  configId="beeline_uz_android_universal_300x250" // Replace with your config ID
                   adUnitId="ca-app-pub-3940256099942544/9214589741 a" // Replace with your ad unit ID
-                  width={343}
-                  height={52}
+                  width={300}
+                  height={250}
                   refreshInterval={30}
                   onAdLoaded={handleBannerLoaded}
                   onAdFailed={handleBannerFailed}
