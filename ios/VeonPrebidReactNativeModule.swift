@@ -63,7 +63,14 @@ class VeonPrebidReactNativeModule: RCTEventEmitter {
 
             // Enable geo location sharing
             Prebid.shared.shareGeoLocation = true
-          
+
+            // Set sourceapp and itunesID for SKAdNetwork support
+            if let bundleIdentifier = Bundle.main.bundleIdentifier {
+                Targeting.shared.sourceapp = bundleIdentifier
+            }
+            // Optionally set iTunes ID if available
+            // Targeting.shared.itunesID = "your-app-store-id"
+
           do {
               try Prebid.initializeSDK(
                 serverURL: prebidHost,
