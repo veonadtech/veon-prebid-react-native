@@ -28,14 +28,7 @@ RCT_CUSTOM_VIEW_PROPERTY(refreshInterval, NSNumber, UIView) {
     [view setValue:[RCTConvert NSNumber:json] forKey:@"refreshIntervalValue"];
 }
 
-// Events
-RCT_EXPORT_VIEW_PROPERTY(onAdLoaded, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onAdDisplayed, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onAdFailed, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onAdClicked, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onAdClosed, RCTDirectEventBlock)
-
-// Commands
+// Commands (must be BEFORE events in Old Architecture)
 RCT_EXTERN_METHOD(loadBanner:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(showBanner:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(hideBanner:(nonnull NSNumber *)node)
@@ -45,5 +38,12 @@ RCT_EXTERN_METHOD(hideInterstitial:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(pauseAuction:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(resumeAuction:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(destroyAuction:(nonnull NSNumber *)node)
+
+// Events (must be AFTER commands)
+RCT_EXPORT_VIEW_PROPERTY(onAdLoaded, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onAdDisplayed, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onAdFailed, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onAdClicked, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onAdClosed, RCTDirectEventBlock)
 
 @end

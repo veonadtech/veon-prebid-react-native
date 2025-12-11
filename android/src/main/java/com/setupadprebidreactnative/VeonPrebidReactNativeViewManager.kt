@@ -172,15 +172,15 @@ class VeonPrebidReactNativeViewManager(
     companion object {
         const val NAME = "VeonPrebidReactNativeView"
 
-        // Command constants
-        private const val COMMAND_LOAD_BANNER = 1
-        private const val COMMAND_SHOW_BANNER = 2
-        private const val COMMAND_HIDE_BANNER = 3
-        private const val COMMAND_LOAD_INTERSTITIAL = 4
-        private const val COMMAND_SHOW_INTERSTITIAL = 5
-        private const val COMMAND_HIDE_INTERSTITIAL = 6
-        private const val COMMAND_PAUSE_AUCTION = 7
-        private const val COMMAND_RESUME_AUCTION = 8
-        private const val COMMAND_DESTROY_AUCTION = 9
+        // Command constants (starts from 0 to match iOS Old Architecture)
+        private const val COMMAND_LOAD_BANNER = 0
+        private const val COMMAND_SHOW_BANNER = 1
+        private const val COMMAND_HIDE_BANNER = 2
+        private const val COMMAND_LOAD_INTERSTITIAL = 3
+        private const val COMMAND_SHOW_INTERSTITIAL = 4
+        private const val COMMAND_HIDE_INTERSTITIAL = 5
+        private const val COMMAND_PAUSE_AUCTION = 6
+        private const val COMMAND_RESUME_AUCTION = 7
+        private const val COMMAND_DESTROY_AUCTION = 8
     }
 }

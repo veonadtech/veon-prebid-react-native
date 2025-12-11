@@ -2,35 +2,35 @@ import React
 
 @objc(VeonPrebidReactNativeViewManager)
 class VeonPrebidReactNativeViewManager: RCTViewManager {
-    
+
     override func view() -> UIView! {
         return VeonPrebidReactNativeView()
     }
-    
+
     override static func requiresMainQueueSetup() -> Bool {
         return true
     }
-    
+
     // MARK: - Command Constants
-    
+
     override func constantsToExport() -> [AnyHashable : Any]! {
         return [
             "Commands": [
-                "loadBanner": 1,
-                "showBanner": 2,
-                "hideBanner": 3,
-                "loadInterstitial": 4,
-                "showInterstitial": 5,
-                "hideInterstitial": 6,
-                "pauseAuction": 7,
-                "resumeAuction": 8,
-                "destroyAuction": 9
+                "loadBanner": 0,
+                "showBanner": 1,
+                "hideBanner": 2,
+                "loadInterstitial": 3,
+                "showInterstitial": 4,
+                "hideInterstitial": 5,
+                "pauseAuction": 6,
+                "resumeAuction": 7,
+                "destroyAuction": 8
             ]
         ]
     }
-    
+
     // MARK: - Commands
-    
+
     @objc func loadBanner(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -38,7 +38,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func showBanner(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -46,7 +46,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func hideBanner(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -54,7 +54,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func loadInterstitial(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -62,7 +62,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func showInterstitial(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -70,7 +70,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func hideInterstitial(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -78,7 +78,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func pauseAuction(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -86,7 +86,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func resumeAuction(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
@@ -94,7 +94,7 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
             }
         }
     }
-    
+
     @objc func destroyAuction(_ node: NSNumber) {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {

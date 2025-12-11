@@ -9,17 +9,17 @@ import {
 import VeonPrebidReactNativeView from './VeonPrebidReactNativeViewNativeComponent';
 import type { VeonPrebidAdProps, AdController, AdEventData } from './types';
 
-// Command IDs - must match ViewManager
+// Command IDs - must match ViewManager (starts from 0 in iOS Old Architecture!)
 const Commands = {
-  loadBanner: 1,
-  showBanner: 2,
-  hideBanner: 3,
-  loadInterstitial: 4,
-  showInterstitial: 5,
-  hideInterstitial: 6,
-  pauseAuction: 7,
-  resumeAuction: 8,
-  destroyAuction: 9,
+  loadBanner: 0,
+  showBanner: 1,
+  hideBanner: 2,
+  loadInterstitial: 3,
+  showInterstitial: 4,
+  hideInterstitial: 5,
+  pauseAuction: 6,
+  resumeAuction: 7,
+  destroyAuction: 8,
 } as const;
 
 const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
