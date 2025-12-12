@@ -40,8 +40,8 @@ export default function App() {
 
         await VeonPrebidSDK.getInstance().initialize({
           prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
-          configHost: 'https://dcdn.veonadx.com/sdk/com.veon.oq/config.json',
-          accountId: 'com.veon.oq', // Replace with your account ID
+          configHost: 'https://dcdn.veonadx.com/sdk/uz.beeline.odp/config.json',
+          accountId: 'uz.beeline.odp', // Replace with your account ID
           timeoutMillis: 3000,
           pbsDebug: __DEV__,
         });
@@ -67,12 +67,10 @@ export default function App() {
    */
   const handleBannerLoaded = (data: AdEventData) => {
     console.log('Banner loaded:', data);
-    Alert.alert('Banner', `Ad loaded from ${data.sdk}`);
   };
 
   const handleBannerFailed = (error: string) => {
     console.error('Banner failed:', error);
-    Alert.alert('Banner Error', error);
   };
 
   const handleBannerClicked = (data: AdEventData) => {
@@ -84,17 +82,14 @@ export default function App() {
    */
   const handleInterstitialLoaded = (data: AdEventData) => {
     console.log('Interstitial loaded:', data);
-    Alert.alert('Interstitial', `Ad loaded from ${data.sdk}`);
   };
 
   const handleInterstitialFailed = (error: string) => {
     console.error('Interstitial failed:', error);
-    Alert.alert('Interstitial Error', error);
   };
 
   const handleInterstitialClosed = (data: AdEventData) => {
     console.log('Interstitial closed:', data);
-    Alert.alert('Interstitial', 'Ad closed');
   };
 
   /**
@@ -157,10 +152,10 @@ export default function App() {
                 <VeonPrebidAd
                   ref={bannerAdRef}
                   adType={AdType.BANNER}
-                  configId="beeline_uz_android_manual_prebid2_test_320x50" // Replace with your config ID
-                  adUnitId="ca-app-pub-3940256099942544/9214589741 a" // Replace with your ad unit ID
-                  width={343}
-                  height={52}
+                  configId="beeline_uz_android_universal_300x250" // Replace with your config ID
+                  adUnitId="ca-app-pub-3940256099942544/9214589741" // Replace with your ad unit ID
+                  width={300}
+                  height={250}
                   refreshInterval={30}
                   onAdLoaded={handleBannerLoaded}
                   onAdFailed={handleBannerFailed}
@@ -187,7 +182,7 @@ export default function App() {
                 ref={interstitialAdRef}
                 adType={AdType.INTERSTITIAL}
                 configId="beeline_uz_android_wheel_interstitial_test" // Replace with your config ID
-                adUnitId="ca-app-pub-3940256099942544/1033173712 e" // Replace with your ad unit ID
+                adUnitId="ca-app-pub-3940256099942544/1033173712" // Replace with your ad unit ID
                 onAdLoaded={handleInterstitialLoaded}
                 onAdFailed={handleInterstitialFailed}
                 onAdClosed={handleInterstitialClosed}
