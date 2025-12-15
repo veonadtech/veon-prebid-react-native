@@ -3,16 +3,41 @@ import GoogleMobileAds
 import PrebidMobile
 import PrebidMobileGAMEventHandlers
 
+// MARK: - AdParameters
+
+struct AdParameters {
+    var configId: String?
+    var adUnitId: String?
+    var adType: String?
+    var bannerWidth: Int
+    var bannerHeight: Int
+    var refreshInterval: Double
+
+    init(configId: String? = nil,
+         adUnitId: String? = nil,
+         adType: String? = nil,
+         bannerWidth: Int = 0,
+         bannerHeight: Int = 0,
+         refreshInterval: Double = 30.0) {
+        self.configId = configId
+        self.adUnitId = adUnitId
+        self.adType = adType
+        self.bannerWidth = bannerWidth
+        self.bannerHeight = bannerHeight
+        self.refreshInterval = refreshInterval
+    }
+}
+
 @objc(VeonPrebidReactNativeView)
 class VeonPrebidReactNativeView: UIView {
 
     // MARK: - Properties
 
     /// Container view that holds ad views
-    private var container: UIView!
+    private var container: UIView?
 
     /// GAM Banner view
-    internal var gamBanner: AdManagerBannerView?
+    var gamBanner: AdManagerBannerView?
 
     /// Prebid banner view
     private var prebidBannerView: PrebidMobile.BannerView?
@@ -24,32 +49,27 @@ class VeonPrebidReactNativeView: UIView {
     private var rewardedAdUnit: RewardedAdUnit?
 
     /// Ad parameters
-    internal var configId: String?
-    internal var adUnitId: String?
-    internal var adType: String?
-    internal var bannerWidth: Int = 0
-    internal var bannerHeight: Int = 0
-    internal var refreshInterval: Double = 30.0
+    var adParameters = AdParameters()
 
     // MARK: - React Native Props
 
     @objc var adTypeValue: NSString? {
         didSet {
-            adType = adTypeValue as String?
+            adParameters.adType = adTypeValue as String?
             updateAdConfiguration()
         }
     }
 
     @objc var configIdValue: NSString? {
         didSet {
-            configId = configIdValue as String?
+            adParameters.configId = configIdValue as String?
             updateAdConfiguration()
         }
     }
 
     @objc var adUnitIdValue: NSString? {
         didSet {
-            adUnitId = adUnitIdValue as String?
+            adParameters.adUnitId = adUnitIdValue as String?
             updateAdConfiguration()
         }
     }
@@ -57,7 +77,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc var widthValue: NSNumber? {
         didSet {
             if let width = widthValue?.intValue {
-                bannerWidth = width
+                adParameters.bannerWidth = width
                 updateAdConfiguration()
             }
         }
@@ -66,7 +86,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc var heightValue: NSNumber? {
         didSet {
             if let height = heightValue?.intValue {
-                bannerHeight = height
+                adParameters.bannerHeight = height
                 updateAdConfiguration()
             }
         }
@@ -75,7 +95,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc var refreshIntervalValue: NSNumber? {
         didSet {
             if let interval = refreshIntervalValue?.doubleValue {
-                refreshInterval = interval
+                adParameters.refreshInterval = interval
                 updateAdConfiguration()
             }
         }
@@ -106,13 +126,14 @@ class VeonPrebidReactNativeView: UIView {
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        setupView()
     }
 
     private func setupView() {
         container = UIView(frame: bounds)
-        container.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        addSubview(container)
+        container?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        if let container = container {
+            addSubview(container)
+        }
 
         NSLog("VeonPrebid iOS: View initialized")
     }
@@ -138,51 +159,20 @@ class VeonPrebidReactNativeView: UIView {
 
     private func updateAdConfiguration() {
         // Only proceed if we have all required parameters
-        guard let adType = adType,
-              let configId = configId,
-              let adUnitId = adUnitId else {
+        guard let adType = adParameters.adType,
+              let configId = adParameters.configId,
+              let adUnitId = adParameters.adUnitId else {
             return
         }
 
         NSLog("VeonPrebid iOS: Updating configuration - Type: \(adType), ConfigId: \(configId), AdUnitId: \(adUnitId)")
-
-        // Setup ad based on type
-        switch adType.lowercased() {
-        case AdType.banner:
-            if bannerWidth > 0 && bannerHeight > 0 {
-                setupBannerAd(configId: configId, adUnitId: adUnitId)
-            }
-        case AdType.interstitial:
-            setupInterstitialAd(configId: configId, adUnitId: adUnitId)
-        case AdType.rewardVideo:
-            setupRewardVideoAd(configId: configId, adUnitId: adUnitId)
-        default:
-            NSLog("VeonPrebid iOS: Unknown ad type: \(adType)")
-        }
-    }
-
-    // MARK: - Ad Setup Methods
-
-    private func setupBannerAd(configId: String, adUnitId: String) {
-        NSLog("VeonPrebid iOS: Setting up banner ad - \(bannerWidth)x\(bannerHeight)")
-        // Banner will be loaded when loadBanner() is called
-    }
-
-    private func setupInterstitialAd(configId: String, adUnitId: String) {
-        NSLog("VeonPrebid iOS: Setting up interstitial ad")
-        // Interstitial will be loaded when loadInterstitial() is called
-    }
-
-    private func setupRewardVideoAd(configId: String, adUnitId: String) {
-        NSLog("VeonPrebid iOS: Setting up reward video ad")
-        // Reward video will be loaded when loadInterstitial() is called
     }
 
     // MARK: - Public Methods (called from ViewManager)
 
     @objc func loadBanner() {
-        guard let configId = configId,
-              let adUnitId = adUnitId else {
+        guard let configId = adParameters.configId,
+              let adUnitId = adParameters.adUnitId else {
             NSLog("VeonPrebid iOS: Cannot load banner - missing configId or adUnitId")
             return
         }
@@ -212,9 +202,9 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     @objc func loadInterstitial() {
-        guard let configId = configId,
-              let adUnitId = adUnitId,
-              let adType = adType else {
+        guard let configId = adParameters.configId,
+              let adUnitId = adParameters.adUnitId,
+              let adType = adParameters.adType else {
             NSLog("VeonPrebid iOS: Cannot load interstitial - missing parameters")
             return
         }
@@ -255,19 +245,19 @@ class VeonPrebidReactNativeView: UIView {
 
     @objc func resumeAuction() {
         NSLog("VeonPrebid iOS: Resuming auction")
-        prebidBannerView?.refreshInterval = refreshInterval
+        prebidBannerView?.refreshInterval = adParameters.refreshInterval
     }
 
     @objc func destroyAuction() {
         NSLog("VeonPrebid iOS: Destroying auction")
         cleanupAds()
-        container.subviews.forEach { $0.removeFromSuperview() }
+        container?.subviews.forEach { $0.removeFromSuperview() }
     }
 
     // MARK: - Banner Loading
 
     private func loadGamBanner(configId: String, adUnitId: String) {
-        let adSize = CGSize(width: bannerWidth, height: bannerHeight)
+        let adSize = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
 
         guard gamBanner == nil else {
             NSLog("VeonPrebid iOS: GAM Banner already exists")
@@ -280,7 +270,7 @@ class VeonPrebidReactNativeView: UIView {
         let parameters = BannerParameters()
         parameters.api = [Signals.Api.MRAID_2]
         adUnit.bannerParameters = parameters
-        adUnit.setAutoRefreshMillis(time: refreshInterval * 1000)
+        adUnit.setAutoRefreshMillis(time: adParameters.refreshInterval * 1000)
 
         // Create a GAMBannerView
         gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: adSize))
@@ -300,10 +290,10 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     internal func loadPrebidBanner() {
-        let adSize = CGSize(width: bannerWidth, height: bannerHeight)
+        let adSize = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
 
         guard prebidBannerView == nil,
-              let configId = configId else {
+              let configId = adParameters.configId else {
             return
         }
 
@@ -316,7 +306,7 @@ class VeonPrebidReactNativeView: UIView {
         // Configure the BannerView
         prebidBannerView?.delegate = self
         prebidBannerView?.adFormat = .banner
-        prebidBannerView?.refreshInterval = refreshInterval
+        prebidBannerView?.refreshInterval = adParameters.refreshInterval
 
         // Load the banner ad
         prebidBannerView?.loadAd()
@@ -326,8 +316,7 @@ class VeonPrebidReactNativeView: UIView {
 
     private func loadInterstitialRendering(configId: String, adUnitId: String) {
         let eventHandler = GAMInterstitialEventHandler(adUnitID: adUnitId)
-        let size = CGSize(width: bannerWidth > 0 ? bannerWidth : 320,
-                         height: bannerHeight > 0 ? bannerHeight : 480)
+        let size = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
 
         prebidInterstitial = InterstitialRenderingAdUnit(
             configID: configId,
@@ -347,7 +336,7 @@ class VeonPrebidReactNativeView: UIView {
 
     // MARK: - Utility Methods
 
-    internal func getRootViewController() -> UIViewController {
+    func getRootViewController() -> UIViewController {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootViewController = windowScene.windows.first?.rootViewController {
             return rootViewController
@@ -356,6 +345,7 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     private func addGamBannerViewToView(_ bannerView: AdManagerBannerView) {
+        guard let container = container else { return }
         bannerView.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(bannerView)
 
@@ -366,6 +356,7 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     private func addPrebidBannerViewToView(_ bannerView: PrebidMobile.BannerView) {
+        guard let container = container else { return }
         bannerView.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(bannerView)
 
@@ -377,7 +368,7 @@ class VeonPrebidReactNativeView: UIView {
         ])
     }
 
-    internal func adSizeFor(cgSize: CGSize) -> AdSize {
+    func adSizeFor(cgSize: CGSize) -> AdSize {
         return AdSize(size: cgSize, flags: 0)
     }
 

@@ -8,7 +8,7 @@ extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
 
     func interstitialDidReceiveAd(_ interstitial: InterstitialRenderingAdUnit) {
         NSLog("VeonPrebid iOS: Interstitial ad loaded")
-        onAdLoaded?(["configId": configId ?? ""])
+        onAdLoaded?(["configId": adParameters.configId ?? ""])
     }
 
     func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error: Error?) {
@@ -19,22 +19,22 @@ extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
 
     func interstitialWillLeaveApplication(_ interstitial: InterstitialRenderingAdUnit) {
         NSLog("VeonPrebid iOS: Interstitial will leave application")
-        onAdClicked?(["configId": configId ?? ""])
+        onAdClicked?(["configId": adParameters.configId ?? ""])
     }
 
     func interstitialDidClickAd(_ interstitial: InterstitialRenderingAdUnit) {
         NSLog("VeonPrebid iOS: Interstitial clicked")
-        onAdClicked?(["configId": configId ?? ""])
+        onAdClicked?(["configId": adParameters.configId ?? ""])
     }
 
     func interstitialDidCloseAd(_ interstitial: InterstitialRenderingAdUnit) {
         NSLog("VeonPrebid iOS: Interstitial closed")
-        onAdClosed?(["configId": configId ?? ""])
+        onAdClosed?(["configId": adParameters.configId ?? ""])
     }
 
     func interstitialWillPresentAd(_ interstitial: InterstitialRenderingAdUnit) {
         NSLog("VeonPrebid iOS: Interstitial displayed")
-        onAdDisplayed?(["configId": configId ?? ""])
+        onAdDisplayed?(["configId": adParameters.configId ?? ""])
     }
 }
 
@@ -80,7 +80,7 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
 
     func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit) {
         NSLog("VeonPrebid iOS: Rewarded ad received")
-        onAdLoaded?(["configId": configId ?? ""])
+        onAdLoaded?(["configId": adParameters.configId ?? ""])
 
         if rewardedAd.isReady {
             rewardedAd.show(from: getRootViewController())
@@ -101,22 +101,22 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
 
     func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit) {
         NSLog("VeonPrebid iOS: Rewarded ad will present")
-        onAdDisplayed?(["configId": configId ?? ""])
+        onAdDisplayed?(["configId": adParameters.configId ?? ""])
     }
 
     func rewardedAdDidDismissAd(_ rewardedAd: RewardedAdUnit) {
         NSLog("VeonPrebid iOS: Rewarded ad dismissed")
-        onAdClosed?(["configId": configId ?? ""])
+        onAdClosed?(["configId": adParameters.configId ?? ""])
     }
 
     func rewardedAdDidClickAd(_ rewardedAd: RewardedAdUnit) {
         NSLog("VeonPrebid iOS: Rewarded ad clicked")
-        onAdClicked?(["configId": configId ?? ""])
+        onAdClicked?(["configId": adParameters.configId ?? ""])
     }
 
     func rewardedAdWillLeaveApplication(_ rewardedAd: RewardedAdUnit) {
         NSLog("VeonPrebid iOS: Rewarded ad will leave application")
-        onAdClicked?(["configId": configId ?? ""])
+        onAdClicked?(["configId": adParameters.configId ?? ""])
     }
 }
 
