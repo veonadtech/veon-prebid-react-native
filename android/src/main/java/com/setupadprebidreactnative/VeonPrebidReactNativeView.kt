@@ -18,7 +18,13 @@ import org.prebid.mobile.api.multiadloader.listeners.MultiInterstitialAdListener
 import org.prebid.mobile.api.rendering.BannerView
 
 class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameLayout(reactContext) {
-  private val TAG = "VeonPrebidRN"
+
+  companion object {
+    private const val TAG = "VeonPrebidRN"
+    private const val DEFAULT_REFRESH_INTERVAL = 30
+    private const val AD_TYPE_BANNER = "banner"
+    private const val AD_TYPE_INTERSTITIAL = "interstitial"
+  }
 
   // Ad loaders
   private var bannerLoader: MultiBannerLoader? = null
@@ -30,14 +36,14 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   private var adUnitId: String? = null
   private var width: Int = 0
   private var height: Int = 0
-  private var refreshInterval: Int = 30
+  private var refreshInterval: Int = DEFAULT_REFRESH_INTERVAL
 
   // Banner view reference
   private var bannerView: BannerView? = null
   private var adView: View? = null
 
   // Track if parameters are complete
-  private var paramsComplete = false
+  private var isParamsComplete = false
 
   init {
     Log.d(TAG, "VeonPrebidReactNativeView initialized")
@@ -51,60 +57,62 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     layoutParams = params
   }
 
+  // PUBLIC API
+
   // Individual setters for React Native props
   fun setAdType(type: String) {
     this.adType = type
     Log.d(TAG, "AdType set: $type")
-    checkAndCreateLoader()
+    createLoaderIfReady()
   }
 
   fun setConfigId(id: String) {
     this.configId = id
     Log.d(TAG, "ConfigId set: $id")
-    checkAndCreateLoader()
+    createLoaderIfReady()
   }
 
   fun setAdUnitId(id: String) {
     this.adUnitId = id
     Log.d(TAG, "AdUnitId set: $id")
-    checkAndCreateLoader()
+    createLoaderIfReady()
   }
 
   fun setAdWidth(w: Int) {
     this.width = w
     Log.d(TAG, "Width set: $w")
-    checkAndCreateLoader()
+    createLoaderIfReady()
   }
 
   fun setAdHeight(h: Int) {
     this.height = h
     Log.d(TAG, "Height set: $h")
-    checkAndCreateLoader()
+    createLoaderIfReady()
   }
 
   fun setRefreshInterval(interval: Int) {
     this.refreshInterval = interval
     Log.d(TAG, "RefreshInterval set: $interval")
-    checkAndCreateLoader()
+    createLoaderIfReady()
   }
 
   // Check if all required params are set and create loader
-  private fun checkAndCreateLoader() {
+  private fun createLoaderIfReady() {
     if (adType != null && configId != null && adUnitId != null &&
-      width > 0 && height > 0 && !paramsComplete) {
+      width > 0 && height > 0 && !isParamsComplete) {
 
-      paramsComplete = true
+      isParamsComplete = true
       Log.d(TAG, "All params set - type=$adType, configId=$configId, adUnitId=$adUnitId, size=${width}x${height}, refresh=$refreshInterval")
 
       // Auto-create loader based on ad type
       when (adType?.lowercase()) {
-        "banner" -> {
+        AD_TYPE_BANNER -> {
           Log.d(TAG, "Auto-creating banner loader")
           if (bannerLoader == null) {
             createBannerLoader()
           }
         }
-        "interstitial" -> {
+        AD_TYPE_INTERSTITIAL -> {
           Log.d(TAG, "Auto-creating interstitial loader")
           if (interstitialLoader == null) {
             createInterstitialLoader()
@@ -114,12 +122,14 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
+  // PRIVATE METHODS
+
   fun loadBanner() {
     Log.d(TAG, "loadBanner called - configId=$configId, adUnitId=$adUnitId")
 
     if (configId == null || adUnitId == null) {
       Log.e(TAG, "Cannot load banner: configId or adUnitId is null")
-      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
+      sendEvent(Event.AD_FAILED, "Config ID or Ad Unit ID is null")
       return
     }
 
@@ -169,7 +179,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       Log.d(TAG, "Banner view added - pixels: ${widthPx}x${heightPx}px, view size: ${view.width}x${view.height}, childCount=$childCount")
     } ?: run {
       Log.w(TAG, "No banner view to show - adView is null. Try calling loadBanner first.")
-      sendEvent("onAdFailed", "No banner loaded yet")
+      sendEvent(Event.AD_FAILED, "No banner loaded yet")
     }
   }
 
@@ -195,50 +205,52 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       )
 
       Log.d(TAG, "MultiBannerLoader created successfully")
-
-      bannerLoader?.setListener(object : MultiBannerViewListener {
-        override fun onAdLoaded(view: View, sdk: SdkType) {
-          Log.d(TAG, "Banner LOADED from ${sdk.name}")
-          adView = view
-          sendEvent("onAdLoaded", getAdId(sdk))
-        }
-
-        override fun onAdFailed(bannerView: BannerView?, error: String?, sdk: SdkType?) {
-          val errorMsg = error ?: "Unknown error"
-          val sdkName = sdk?.name ?: "unknown"
-          Log.e(TAG, "Banner FAILED: $errorMsg (SDK: $sdkName)")
-          sendEvent("onAdFailed", errorMsg)
-        }
-
-        override fun onAdClicked(bannerView: BannerView?, sdk: SdkType) {
-          Log.d(TAG, "Banner clicked from ${sdk.name}")
-          sendEvent("onAdClicked", getAdId(sdk))
-        }
-
-        override fun onAdClosed(bannerView: BannerView?, sdk: SdkType) {
-          Log.d(TAG, "Banner closed from ${sdk.name}")
-          sendEvent("onAdClosed", getAdId(sdk))
-        }
-
-        override fun onAdDisplayed(bannerAdView: BannerView?, sdk: SdkType) {
-          this@VeonPrebidReactNativeView.bannerView = bannerAdView
-          Log.d(TAG, "Banner DISPLAYED from ${sdk.name}")
-          sendEvent("onAdDisplayed", getAdId(sdk))
-        }
-
-        override fun onImpression(sdk: SdkType) {
-          Log.d(TAG, "Banner impression from ${sdk.name}")
-        }
-
-        override fun onAdOpened(sdk: SdkType) {
-          Log.d(TAG, "Banner opened from ${sdk.name}")
-        }
-      })
-
+      bannerLoader?.setListener(createBannerListener())
       Log.d(TAG, "Banner listener set successfully")
     } catch (e: Exception) {
       Log.e(TAG, "Error creating banner loader", e)
-      sendEvent("onAdFailed", "Error creating banner: ${e.message}")
+      sendEvent(Event.AD_FAILED, "Error creating banner: ${e.message}")
+    }
+  }
+
+  private fun createBannerListener(): MultiBannerViewListener {
+    return object : MultiBannerViewListener {
+      override fun onAdLoaded(view: View, sdk: SdkType) {
+        Log.d(TAG, "Banner LOADED from ${sdk.name}")
+        adView = view
+        sendEvent(Event.AD_LOADED, getAdId(sdk))
+      }
+
+      override fun onAdFailed(bannerView: BannerView?, error: String?, sdk: SdkType?) {
+        val errorMsg = error ?: "Unknown error"
+        val sdkName = sdk?.name ?: "unknown"
+        Log.e(TAG, "Banner FAILED: $errorMsg (SDK: $sdkName)")
+        sendEvent(Event.AD_FAILED, errorMsg)
+      }
+
+      override fun onAdClicked(bannerView: BannerView?, sdk: SdkType) {
+        Log.d(TAG, "Banner clicked from ${sdk.name}")
+        sendEvent(Event.AD_CLICKED, getAdId(sdk))
+      }
+
+      override fun onAdClosed(bannerView: BannerView?, sdk: SdkType) {
+        Log.d(TAG, "Banner closed from ${sdk.name}")
+        sendEvent(Event.AD_CLOSED, getAdId(sdk))
+      }
+
+      override fun onAdDisplayed(bannerAdView: BannerView?, sdk: SdkType) {
+        this@VeonPrebidReactNativeView.bannerView = bannerAdView
+        Log.d(TAG, "Banner DISPLAYED from ${sdk.name}")
+        sendEvent(Event.AD_DISPLAYED, getAdId(sdk))
+      }
+
+      override fun onImpression(sdk: SdkType) {
+        Log.d(TAG, "Banner impression from ${sdk.name}")
+      }
+
+      override fun onAdOpened(sdk: SdkType) {
+        Log.d(TAG, "Banner opened from ${sdk.name}")
+      }
     }
   }
 
@@ -246,7 +258,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     Log.d(TAG, "loadInterstitial called")
     if (configId == null || adUnitId == null) {
       Log.e(TAG, "Cannot load interstitial: configId or adUnitId is null")
-      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
+      sendEvent(Event.AD_FAILED, "Config ID or Ad Unit ID is null")
       return
     }
 
@@ -262,7 +274,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     Log.d(TAG, "showInterstitial called")
     interstitialLoader?.showAd() ?: run {
       Log.w(TAG, "No interstitial to show")
-      sendEvent("onAdFailed", "No interstitial loaded yet")
+      sendEvent(Event.AD_FAILED, "No interstitial loaded yet")
     }
   }
 
@@ -282,47 +294,49 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       )
 
       Log.d(TAG, "MultiInterstitialAdLoader created successfully")
-
-      interstitialLoader?.setListener(object : MultiInterstitialAdListener {
-        override fun onAdLoaded(sdk: SdkType) {
-          Log.d(TAG, "Interstitial LOADED from ${sdk.name}")
-          sendEvent("onAdLoaded", getAdId(sdk))
-        }
-
-        override fun onAdDisplayed(sdk: SdkType) {
-          Log.d(TAG, "Interstitial DISPLAYED from ${sdk.name}")
-          sendEvent("onAdDisplayed", getAdId(sdk))
-        }
-
-        override fun onAdFailed(error: String?, sdk: SdkType?) {
-          val errorMsg = error ?: "Unknown error"
-          val sdkName = sdk?.name ?: "unknown"
-          Log.e(TAG, "Interstitial FAILED: $errorMsg (SDK: $sdkName)")
-          sendEvent("onAdFailed", errorMsg)
-        }
-
-        override fun onAdFailedToShow(error: String?, sdk: SdkType?) {
-          val errorMsg = error ?: "Unknown error"
-          val sdkName = sdk?.name ?: "unknown"
-          Log.e(TAG, "Interstitial FAILED TO SHOW: $errorMsg (SDK: $sdkName)")
-          sendEvent("onAdFailed", errorMsg)
-        }
-
-        override fun onAdClicked(sdk: SdkType) {
-          Log.d(TAG, "Interstitial clicked from ${sdk.name}")
-          sendEvent("onAdClicked", getAdId(sdk))
-        }
-
-        override fun onAdClosed(sdk: SdkType) {
-          Log.d(TAG, "Interstitial closed from ${sdk.name}")
-          sendEvent("onAdClosed", getAdId(sdk))
-        }
-      })
-
+      interstitialLoader?.setListener(createInterstitialListener())
       Log.d(TAG, "Interstitial listener set successfully")
     } catch (e: Exception) {
       Log.e(TAG, "Error creating interstitial loader", e)
-      sendEvent("onAdFailed", "Error creating interstitial: ${e.message}")
+      sendEvent(Event.AD_FAILED, "Error creating interstitial: ${e.message}")
+    }
+  }
+
+  private fun createInterstitialListener(): MultiInterstitialAdListener {
+    return object : MultiInterstitialAdListener {
+      override fun onAdLoaded(sdk: SdkType) {
+        Log.d(TAG, "Interstitial LOADED from ${sdk.name}")
+        sendEvent(Event.AD_LOADED, getAdId(sdk))
+      }
+
+      override fun onAdDisplayed(sdk: SdkType) {
+        Log.d(TAG, "Interstitial DISPLAYED from ${sdk.name}")
+        sendEvent(Event.AD_DISPLAYED, getAdId(sdk))
+      }
+
+      override fun onAdFailed(error: String?, sdk: SdkType?) {
+        val errorMsg = error ?: "Unknown error"
+        val sdkName = sdk?.name ?: "unknown"
+        Log.e(TAG, "Interstitial FAILED: $errorMsg (SDK: $sdkName)")
+        sendEvent(Event.AD_FAILED, errorMsg)
+      }
+
+      override fun onAdFailedToShow(error: String?, sdk: SdkType?) {
+        val errorMsg = error ?: "Unknown error"
+        val sdkName = sdk?.name ?: "unknown"
+        Log.e(TAG, "Interstitial FAILED TO SHOW: $errorMsg (SDK: $sdkName)")
+        sendEvent(Event.AD_FAILED, errorMsg)
+      }
+
+      override fun onAdClicked(sdk: SdkType) {
+        Log.d(TAG, "Interstitial clicked from ${sdk.name}")
+        sendEvent(Event.AD_CLICKED, getAdId(sdk))
+      }
+
+      override fun onAdClosed(sdk: SdkType) {
+        Log.d(TAG, "Interstitial closed from ${sdk.name}")
+        sendEvent(Event.AD_CLOSED, getAdId(sdk))
+      }
     }
   }
 
@@ -350,17 +364,17 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
-  private fun sendEvent(eventName: String, data: String) {
-    val event: WritableMap = Arguments.createMap()
-    event.putString("data", data)
+  private fun sendEvent(event: Event, data: String) {
+    val eventData: WritableMap = Arguments.createMap()
+    eventData.putString("data", data)
 
     try {
       reactContext
         .getJSModule(RCTEventEmitter::class.java)
-        .receiveEvent(id, eventName, event)
-      Log.d(TAG, "Event sent: $eventName - $data")
+        .receiveEvent(id, event.eventName, eventData)
+      Log.d(TAG, "Event sent: ${event.eventName} - $data")
     } catch (e: Exception) {
-      Log.e(TAG, "Error sending event: $eventName", e)
+      Log.e(TAG, "Error sending event: ${event.eventName}", e)
     }
   }
 
@@ -394,12 +408,22 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     Log.d(TAG, "Destroying view")
     destroyBannerLoader()
     destroyInterstitialLoader()
-    paramsComplete = false
+    isParamsComplete = false
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     Log.d(TAG, "View detached from window")
     destroy()
+  }
+
+  // DATA CLASSES
+
+  private enum class Event(val eventName: String) {
+    AD_LOADED("onAdLoaded"),
+    AD_FAILED("onAdFailed"),
+    AD_CLICKED("onAdClicked"),
+    AD_CLOSED("onAdClosed"),
+    AD_DISPLAYED("onAdDisplayed")
   }
 }
