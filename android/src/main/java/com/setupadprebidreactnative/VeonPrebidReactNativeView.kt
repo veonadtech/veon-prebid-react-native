@@ -26,17 +26,30 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     private const val AD_TYPE_INTERSTITIAL = "interstitial"
   }
 
+  // Data class for ad parameters
+  private data class AdParams(
+    var adType: String? = null,
+    var configId: String? = null,
+    var adUnitId: String? = null,
+    var width: Int = 0,
+    var height: Int = 0,
+    var refreshInterval: Int = DEFAULT_REFRESH_INTERVAL
+  ) {
+    fun hasRequiredBannerParams(): Boolean {
+      return adType != null && configId != null && adUnitId != null && width > 0 && height > 0
+    }
+
+    fun hasRequiredInterstitialParams(): Boolean {
+      return adType != null && configId != null && adUnitId != null
+    }
+  }
+
   // Ad loaders
   private var bannerLoader: MultiBannerLoader? = null
   private var interstitialLoader: MultiInterstitialAdLoader? = null
 
-  // Ad parameters - stored individually for compatibility with ViewManager
-  private var adType: String? = null
-  private var configId: String? = null
-  private var adUnitId: String? = null
-  private var width: Int = 0
-  private var height: Int = 0
-  private var refreshInterval: Int = DEFAULT_REFRESH_INTERVAL
+  // Ad parameters
+  private val adParams = AdParams()
 
   // Banner view reference
   private var bannerView: BannerView? = null
@@ -61,51 +74,49 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   // Individual setters for React Native props
   fun setAdType(type: String) {
-    this.adType = type
+    adParams.adType = type
     Log.d(TAG, "AdType set: $type")
     createLoaderIfReady()
   }
 
   fun setConfigId(id: String) {
-    this.configId = id
+    adParams.configId = id
     Log.d(TAG, "ConfigId set: $id")
     createLoaderIfReady()
   }
 
   fun setAdUnitId(id: String) {
-    this.adUnitId = id
+    adParams.adUnitId = id
     Log.d(TAG, "AdUnitId set: $id")
     createLoaderIfReady()
   }
 
   fun setAdWidth(w: Int) {
-    this.width = w
+    adParams.width = w
     Log.d(TAG, "Width set: $w")
     createLoaderIfReady()
   }
 
   fun setAdHeight(h: Int) {
-    this.height = h
+    adParams.height = h
     Log.d(TAG, "Height set: $h")
     createLoaderIfReady()
   }
 
   fun setRefreshInterval(interval: Int) {
-    this.refreshInterval = interval
+    adParams.refreshInterval = interval
     Log.d(TAG, "RefreshInterval set: $interval")
     createLoaderIfReady()
   }
 
   // Check if all required params are set and create loader
   private fun createLoaderIfReady() {
-    if (adType != null && configId != null && adUnitId != null &&
-      width > 0 && height > 0 && !isParamsComplete) {
-
+    if (adParams.hasRequiredBannerParams() && !isParamsComplete) {
       isParamsComplete = true
-      Log.d(TAG, "All params set - type=$adType, configId=$configId, adUnitId=$adUnitId, size=${width}x${height}, refresh=$refreshInterval")
+      Log.d(TAG, "All params set - type=${adParams.adType}, configId=${adParams.configId}, adUnitId=${adParams.adUnitId}, size=${adParams.width}x${adParams.height}, refresh=${adParams.refreshInterval}")
 
       // Auto-create loader based on ad type
-      when (adType?.lowercase()) {
+      when (adParams.adType?.lowercase()) {
         AD_TYPE_BANNER -> {
           Log.d(TAG, "Auto-creating banner loader")
           if (bannerLoader == null) {
@@ -119,17 +130,29 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
           }
         }
       }
+    } else if (adParams.hasRequiredInterstitialParams() && !isParamsComplete) {
+      isParamsComplete = true
+      Log.d(TAG, "All params set for interstitial - type=${adParams.adType}, configId=${adParams.configId}, adUnitId=${adParams.adUnitId}")
+
+      when (adParams.adType?.lowercase()) {
+        AD_TYPE_INTERSTITIAL -> {
+          Log.d(TAG, "Auto-creating interstitial loader")
+          if (interstitialLoader == null) {
+            createInterstitialLoader()
+          }
+        }
+      }
     }
   }
 
   // PRIVATE METHODS
 
   fun loadBanner() {
-    Log.d(TAG, "loadBanner called - configId=$configId, adUnitId=$adUnitId")
+    Log.d(TAG, "loadBanner called - configId=${adParams.configId}, adUnitId=${adParams.adUnitId}")
 
-    if (configId == null || adUnitId == null) {
-      Log.e(TAG, "Cannot load banner: configId or adUnitId is null")
-      sendEvent(Event.AD_FAILED, "Config ID or Ad Unit ID is null")
+    if (!adParams.hasRequiredBannerParams()) {
+      Log.e(TAG, "Cannot load banner: missing required parameters")
+      sendEvent(Event.AD_FAILED, "Missing required parameters")
       return
     }
 
@@ -151,12 +174,12 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
         (view.parent as? FrameLayout)?.removeView(view)
       }
 
-      Log.d(TAG, "Adding banner view to container - size: ${width}x${height}dp")
+      Log.d(TAG, "Adding banner view to container - size: ${adParams.width}x${adParams.height}dp")
 
       // Convert dp to pixels for layout
       val density = resources.displayMetrics.density
-      val widthPx = (width * density).toInt()
-      val heightPx = (height * density).toInt()
+      val widthPx = (adParams.width * density).toInt()
+      val heightPx = (adParams.height * density).toInt()
 
       // Set layout params on the ad view itself
       view.layoutParams = LayoutParams(widthPx, heightPx)
@@ -193,15 +216,15 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   }
 
   private fun createBannerLoader() {
-    Log.d(TAG, "Creating banner loader - size: ${width}x${height}, configId: $configId, adUnitId: $adUnitId, refresh: $refreshInterval")
+    Log.d(TAG, "Creating banner loader - size: ${adParams.width}x${adParams.height}, configId: ${adParams.configId}, adUnitId: ${adParams.adUnitId}, refresh: ${adParams.refreshInterval}")
 
     try {
       bannerLoader = MultiBannerLoader(
         context = context,
-        adSize = AdSize(width, height),
-        configId = configId!!,
-        gamAdUnitId = adUnitId!!,
-        autoRefreshDelay = refreshInterval
+        adSize = AdSize(adParams.width, adParams.height),
+        configId = adParams.configId!!,
+        gamAdUnitId = adParams.adUnitId!!,
+        autoRefreshDelay = adParams.refreshInterval
       )
 
       Log.d(TAG, "MultiBannerLoader created successfully")
@@ -256,9 +279,9 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun loadInterstitial() {
     Log.d(TAG, "loadInterstitial called")
-    if (configId == null || adUnitId == null) {
-      Log.e(TAG, "Cannot load interstitial: configId or adUnitId is null")
-      sendEvent(Event.AD_FAILED, "Config ID or Ad Unit ID is null")
+    if (!adParams.hasRequiredInterstitialParams()) {
+      Log.e(TAG, "Cannot load interstitial: missing required parameters")
+      sendEvent(Event.AD_FAILED, "Missing required parameters")
       return
     }
 
@@ -289,8 +312,8 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     try {
       interstitialLoader = MultiInterstitialAdLoader(
         context = reactContext.currentActivity ?: reactContext,
-        configId = configId!!,
-        gamAdUnitId = adUnitId!!
+        configId = adParams.configId!!,
+        gamAdUnitId = adParams.adUnitId!!
       )
 
       Log.d(TAG, "MultiInterstitialAdLoader created successfully")
@@ -348,7 +371,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun resumeAuction() {
     Log.d(TAG, "resumeAuction called")
-    bannerView?.setAutoRefreshDelay(refreshInterval)
+    bannerView?.setAutoRefreshDelay(adParams.refreshInterval)
   }
 
   fun destroyAuction() {
@@ -358,8 +381,8 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   private fun getAdId(sdk: SdkType): String {
     return when (sdk) {
-      SdkType.PREBID -> configId ?: "unknown"
-      SdkType.GAM -> adUnitId ?: "unknown"
+      SdkType.PREBID -> adParams.configId ?: "unknown"
+      SdkType.GAM -> adParams.adUnitId ?: "unknown"
       else -> "unknown"
     }
   }
