@@ -67,10 +67,12 @@ export default function App() {
    */
   const handleBannerLoaded = (data: AdEventData) => {
     console.log('Banner loaded:', data);
+    Alert.alert('Banner', `Ad loaded from ${data.sdkType}`);
   };
 
   const handleBannerFailed = (error: string) => {
     console.error('Banner failed:', error);
+    Alert.alert('Banner Error', error);
   };
 
   const handleBannerClicked = (data: AdEventData) => {
@@ -82,14 +84,17 @@ export default function App() {
    */
   const handleInterstitialLoaded = (data: AdEventData) => {
     console.log('Interstitial loaded:', data);
+    Alert.alert('Interstitial', `Ad loaded from ${data.sdkType}`);
   };
 
   const handleInterstitialFailed = (error: string) => {
     console.error('Interstitial failed:', error);
+    Alert.alert('Interstitial Error', error);
   };
 
   const handleInterstitialClosed = (data: AdEventData) => {
     console.log('Interstitial closed:', data);
+    Alert.alert('Interstitial', 'Ad closed');
   };
 
   /**

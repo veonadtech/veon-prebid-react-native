@@ -248,30 +248,30 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       override fun onAdLoaded(view: View, sdk: SdkType) {
         Log.d(TAG, "Banner LOADED from ${sdk.name}")
         adView = view
-        sendEvent(Event.AD_LOADED, getAdId(sdk))
+        sendEvent(Event.AD_LOADED, sdk)
       }
 
       override fun onAdFailed(bannerView: BannerView?, error: String?, sdk: SdkType?) {
         val errorMsg = error ?: "Unknown error"
         val sdkName = sdk?.name ?: "unknown"
         Log.e(TAG, "Banner FAILED: $errorMsg (SDK: $sdkName)")
-        sendEvent(Event.AD_FAILED, errorMsg)
+        sendEvent(Event.AD_FAILED, errorMsg, sdk)
       }
 
       override fun onAdClicked(bannerView: BannerView?, sdk: SdkType) {
         Log.d(TAG, "Banner clicked from ${sdk.name}")
-        sendEvent(Event.AD_CLICKED, getAdId(sdk))
+        sendEvent(Event.AD_CLICKED, sdk)
       }
 
       override fun onAdClosed(bannerView: BannerView?, sdk: SdkType) {
         Log.d(TAG, "Banner closed from ${sdk.name}")
-        sendEvent(Event.AD_CLOSED, getAdId(sdk))
+        sendEvent(Event.AD_CLOSED, sdk)
       }
 
       override fun onAdDisplayed(bannerAdView: BannerView?, sdk: SdkType) {
         this@VeonPrebidReactNativeView.bannerView = bannerAdView
         Log.d(TAG, "Banner DISPLAYED from ${sdk.name}")
-        sendEvent(Event.AD_DISPLAYED, getAdId(sdk))
+        sendEvent(Event.AD_DISPLAYED, sdk)
       }
 
       override fun onImpression(sdk: SdkType) {
@@ -345,36 +345,36 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     return object : MultiInterstitialAdListener {
       override fun onAdLoaded(sdk: SdkType) {
         Log.d(TAG, "Interstitial LOADED from ${sdk.name}")
-        sendEvent(Event.AD_LOADED, getAdId(sdk))
+        sendEvent(Event.AD_LOADED, sdk)
       }
 
       override fun onAdDisplayed(sdk: SdkType) {
         Log.d(TAG, "Interstitial DISPLAYED from ${sdk.name}")
-        sendEvent(Event.AD_DISPLAYED, getAdId(sdk))
+        sendEvent(Event.AD_DISPLAYED, sdk)
       }
 
       override fun onAdFailed(error: String?, sdk: SdkType?) {
         val errorMsg = error ?: "Unknown error"
         val sdkName = sdk?.name ?: "unknown"
         Log.e(TAG, "Interstitial FAILED: $errorMsg (SDK: $sdkName)")
-        sendEvent(Event.AD_FAILED, errorMsg)
+        sendEvent(Event.AD_FAILED, errorMsg, sdk)
       }
 
       override fun onAdFailedToShow(error: String?, sdk: SdkType?) {
         val errorMsg = error ?: "Unknown error"
         val sdkName = sdk?.name ?: "unknown"
         Log.e(TAG, "Interstitial FAILED TO SHOW: $errorMsg (SDK: $sdkName)")
-        sendEvent(Event.AD_FAILED, errorMsg)
+        sendEvent(Event.AD_FAILED, errorMsg, sdk)
       }
 
       override fun onAdClicked(sdk: SdkType) {
         Log.d(TAG, "Interstitial clicked from ${sdk.name}")
-        sendEvent(Event.AD_CLICKED, getAdId(sdk))
+        sendEvent(Event.AD_CLICKED, sdk)
       }
 
       override fun onAdClosed(sdk: SdkType) {
         Log.d(TAG, "Interstitial closed from ${sdk.name}")
-        sendEvent(Event.AD_CLOSED, getAdId(sdk))
+        sendEvent(Event.AD_CLOSED, sdk)
       }
     }
   }
@@ -395,23 +395,42 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     destroy()
   }
 
-  private fun getAdId(sdk: SdkType): String {
-    return when (sdk) {
-      SdkType.PREBID -> adParams.configId ?: "unknown"
-      SdkType.GAM -> adParams.adUnitId ?: "unknown"
-      else -> "unknown"
-    }
+  private fun getSdkTypeName(sdk: SdkType?): String {
+    return sdk?.name?.lowercase() ?: "unknown"
   }
 
-  private fun sendEvent(event: Event, data: String) {
+  // Send event with SDK type (for successful events)
+  private fun sendEvent(event: Event, sdk: SdkType) {
     val eventData: WritableMap = Arguments.createMap()
-    eventData.putString("data", data)
+    eventData.putString("configId", adParams.configId)
+    eventData.putString("adUnitId", adParams.adUnitId)
+    eventData.putString("sdkType", getSdkTypeName(sdk))
 
     try {
       reactContext
         .getJSModule(RCTEventEmitter::class.java)
         .receiveEvent(id, event.eventName, eventData)
-      Log.d(TAG, "Event sent: ${event.eventName} - $data")
+      Log.d(TAG, "Event sent: ${event.eventName} - SDK: ${sdk.name}")
+    } catch (e: Exception) {
+      Log.e(TAG, "Error sending event: ${event.eventName}", e)
+    }
+  }
+
+  // Send event with error message (for failed events)
+  private fun sendEvent(event: Event, error: String, sdk: SdkType? = null) {
+    val eventData: WritableMap = Arguments.createMap()
+    eventData.putString("configId", adParams.configId)
+    eventData.putString("adUnitId", adParams.adUnitId)
+    eventData.putString("error", error)
+    if (sdk != null) {
+      eventData.putString("sdkType", getSdkTypeName(sdk))
+    }
+
+    try {
+      reactContext
+        .getJSModule(RCTEventEmitter::class.java)
+        .receiveEvent(id, event.eventName, eventData)
+      Log.d(TAG, "Event sent: ${event.eventName} - Error: $error")
     } catch (e: Exception) {
       Log.e(TAG, "Error sending event: ${event.eventName}", e)
     }
