@@ -145,8 +145,6 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
-  // PRIVATE METHODS
-
   fun loadBanner() {
     Log.d(TAG, "loadBanner called - configId=${adParams.configId}, adUnitId=${adParams.adUnitId}")
 
@@ -218,12 +216,21 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   private fun createBannerLoader() {
     Log.d(TAG, "Creating banner loader - size: ${adParams.width}x${adParams.height}, configId: ${adParams.configId}, adUnitId: ${adParams.adUnitId}, refresh: ${adParams.refreshInterval}")
 
+    val configId = adParams.configId
+    val adUnitId = adParams.adUnitId
+
+    if (configId == null || adUnitId == null) {
+      Log.e(TAG, "Cannot create banner loader: missing configId or adUnitId")
+      sendEvent(Event.AD_FAILED, "Missing required parameters")
+      return
+    }
+
     try {
       bannerLoader = MultiBannerLoader(
         context = context,
         adSize = AdSize(adParams.width, adParams.height),
-        configId = adParams.configId!!,
-        gamAdUnitId = adParams.adUnitId!!,
+        configId = configId,
+        gamAdUnitId = adUnitId,
         autoRefreshDelay = adParams.refreshInterval
       )
 
@@ -309,11 +316,20 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   private fun createInterstitialLoader() {
     Log.d(TAG, "Creating interstitial loader")
 
+    val configId = adParams.configId
+    val adUnitId = adParams.adUnitId
+
+    if (configId == null || adUnitId == null) {
+      Log.e(TAG, "Cannot create interstitial loader: missing configId or adUnitId")
+      sendEvent(Event.AD_FAILED, "Missing required parameters")
+      return
+    }
+
     try {
       interstitialLoader = MultiInterstitialAdLoader(
         context = reactContext.currentActivity ?: reactContext,
-        configId = adParams.configId!!,
-        gamAdUnitId = adParams.adUnitId!!
+        configId = configId,
+        gamAdUnitId = adUnitId
       )
 
       Log.d(TAG, "MultiInterstitialAdLoader created successfully")
