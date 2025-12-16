@@ -99,7 +99,7 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
 
     const handleAdFailed = useCallback(
       (event: any) => {
-        const error = event.nativeEvent.message || 'Unknown error';
+        const error = event.nativeEvent.error || 'Unknown error';
         console.error('Ad failed:', error);
         onAdFailed?.(error);
       },

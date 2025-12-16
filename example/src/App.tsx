@@ -67,7 +67,7 @@ export default function App() {
    */
   const handleBannerLoaded = (data: AdEventData) => {
     console.log('Banner loaded:', data);
-    Alert.alert('Banner', `Ad loaded from ${data.sdk}`);
+    Alert.alert('Banner', `Ad loaded from ${data.sdkType}`);
   };
 
   const handleBannerFailed = (error: string) => {
@@ -84,7 +84,7 @@ export default function App() {
    */
   const handleInterstitialLoaded = (data: AdEventData) => {
     console.log('Interstitial loaded:', data);
-    Alert.alert('Interstitial', `Ad loaded from ${data.sdk}`);
+    Alert.alert('Interstitial', `Ad loaded from ${data.sdkType}`);
   };
 
   const handleInterstitialFailed = (error: string) => {
