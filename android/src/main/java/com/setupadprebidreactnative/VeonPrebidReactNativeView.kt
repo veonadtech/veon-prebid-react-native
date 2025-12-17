@@ -55,63 +55,31 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   fun setAdType(type: String) {
     this.adType = type
     Log.d(TAG, "AdType set: $type")
-    checkAndCreateLoader()
   }
 
   fun setConfigId(id: String) {
     this.configId = id
     Log.d(TAG, "ConfigId set: $id")
-    checkAndCreateLoader()
   }
 
   fun setAdUnitId(id: String) {
     this.adUnitId = id
     Log.d(TAG, "AdUnitId set: $id")
-    checkAndCreateLoader()
   }
 
   fun setAdWidth(w: Int) {
     this.width = w
     Log.d(TAG, "Width set: $w")
-    checkAndCreateLoader()
   }
 
   fun setAdHeight(h: Int) {
     this.height = h
     Log.d(TAG, "Height set: $h")
-    checkAndCreateLoader()
   }
 
   fun setRefreshInterval(interval: Int) {
     this.refreshInterval = interval
     Log.d(TAG, "RefreshInterval set: $interval")
-    checkAndCreateLoader()
-  }
-
-  // Check if all required params are set and create loader
-  private fun checkAndCreateLoader() {
-    if (adType != null && configId != null && adUnitId != null &&
-      width > 0 && height > 0 && !paramsComplete) {
-
-      paramsComplete = true
-      Log.d(TAG, "All params set - type=$adType, configId=$configId, adUnitId=$adUnitId, size=${width}x${height}, refresh=$refreshInterval")
-
-      // Auto-create loader based on ad type
-      when (adType?.lowercase()) {
-        "banner" -> {
-          Log.d(TAG, "Auto-creating banner loader")
-          if (bannerLoader == null) {
-            createBannerLoader()
-          }
-        }
-        "interstitial" -> {
-          Log.d(TAG, "Auto-creating interstitial loader")
-          if (interstitialLoader == null) {
-            createInterstitialLoader()
-          }
-        }
-      }
-    }
   }
 
   fun loadBanner() {
