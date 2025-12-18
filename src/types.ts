@@ -24,7 +24,8 @@ export interface VeonPrebidViewProps {
 export interface AdEventData {
   configId?: string;
   adUnitId?: string;
-  sdk?: string;
+  sdkType?: string;
+  error?: string;
 }
 
 export interface AdController {
@@ -49,7 +50,7 @@ export interface VeonPrebidAdProps {
   style?: any;
   onAdLoaded?: (data: AdEventData) => void;
   onAdDisplayed?: (data: AdEventData) => void;
-  onAdFailed?: (error: string) => void;
+  onAdFailed?: (data: AdEventData) => void;
   onAdClicked?: (data: AdEventData) => void;
   onAdClosed?: (data: AdEventData) => void;
 }
