@@ -42,9 +42,6 @@ class VeonPrebidReactNativeView: UIView {
     /// Prebid banner view
     private var prebidBannerView: PrebidMobile.BannerView?
 
-    /// Prebid banner ad unit (must be retained for auto-refresh to work)
-    private var bannerAdUnit: BannerAdUnit?
-
     /// Prebid interstitial rendering ad unit
     private var prebidInterstitial: InterstitialRenderingAdUnit?
 
@@ -148,8 +145,6 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     private func cleanupAds() {
-        bannerAdUnit?.stopAutoRefresh()
-        bannerAdUnit = nil
         prebidBannerView?.delegate = nil
         prebidBannerView = nil
         gamBanner?.delegate = nil
@@ -269,14 +264,13 @@ class VeonPrebidReactNativeView: UIView {
             return
         }
 
-        // Store as property so it stays alive for auto-refresh
-        bannerAdUnit = BannerAdUnit(configId: configId, size: adSize)
+        let adUnit = BannerAdUnit(configId: configId, size: adSize)
 
         // Configure banner parameters
         let parameters = BannerParameters()
         parameters.api = [Signals.Api.MRAID_2]
-        bannerAdUnit?.bannerParameters = parameters
-        bannerAdUnit?.setAutoRefreshMillis(time: adParameters.refreshInterval * 1000)
+        adUnit.bannerParameters = parameters
+        adUnit.setAutoRefreshMillis(time: adParameters.refreshInterval * 1000)
 
         // Create a GAMBannerView
         gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: adSize))
@@ -286,7 +280,7 @@ class VeonPrebidReactNativeView: UIView {
 
         // Make a bid request to Prebid Server
         let gamRequest = AdManagerRequest()
-        bannerAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
+        adUnit.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
             guard let self = self, let gamBanner = self.gamBanner else { return }
             NSLog("VeonPrebid iOS: Prebid demand fetch for GAM - \(resultCode.name())")
 

@@ -1,5 +1,6 @@
 package com.setupadprebidreactnative
 
+import android.content.Context
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -35,20 +36,8 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   private var bannerView: BannerView? = null
   private var adView: View? = null
 
-  // Track banner display state (survives SDK removing old view on refresh)
-  private var isBannerShowing = false
-
   // Track if parameters are complete
   private var paramsComplete = false
-
-  // Runnable for forcing layout after programmatic view changes
-  private val measureAndLayout = Runnable {
-    measure(
-      MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY)
-    )
-    layout(left, top, right, bottom)
-  }
 
   init {
     Log.d(TAG, "VeonPrebidReactNativeView initialized")
@@ -60,12 +49,6 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     )
     params.gravity = Gravity.CENTER
     layoutParams = params
-  }
-
-  // Override requestLayout to force React Native to re-render programmatically added children
-  override fun requestLayout() {
-    super.requestLayout()
-    post(measureAndLayout)
   }
 
   // Individual setters for React Native props
@@ -121,11 +104,6 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     Log.d(TAG, "showBanner called - adView=$adView, size before: ${adView?.width}x${adView?.height}")
 
     adView?.let { view ->
-      // Remove all existing children first to avoid stale views
-      if (childCount > 0) {
-        removeAllViews()
-      }
-
       if (view.parent != null) {
         Log.d(TAG, "Removing view from old parent: ${view.parent}")
         (view.parent as? FrameLayout)?.removeView(view)
@@ -146,7 +124,6 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       addView(view, params)
 
       visibility = View.VISIBLE
-      isBannerShowing = true
 
       // Force layout and measure
       view.measure(
@@ -166,7 +143,6 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun hideBanner() {
     Log.d(TAG, "hideBanner called")
-    isBannerShowing = false
     adView?.let { view ->
       removeView(view)
       visibility = View.GONE
@@ -190,17 +166,9 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
       bannerLoader?.setListener(object : MultiBannerViewListener {
         override fun onAdLoaded(view: View, sdk: SdkType) {
-          Log.d(TAG, "Banner LOADED from ${sdk.name}, isBannerShowing=$isBannerShowing")
+          Log.d(TAG, "Banner LOADED from ${sdk.name}")
           adView = view
           sendEvent("onAdLoaded", sdk)
-
-          // Auto-refresh: if banner was already displayed, replace old view with new one
-          if (isBannerShowing) {
-            Log.d(TAG, "Banner refresh detected - auto-replacing displayed view")
-            post {
-              showBanner()
-            }
-          }
         }
 
         override fun onAdFailed(bannerView: BannerView?, error: String?, sdk: SdkType?) {
@@ -395,7 +363,6 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       bannerView = null
       bannerLoader = null
       adView = null
-      isBannerShowing = false
     }
   }
 
