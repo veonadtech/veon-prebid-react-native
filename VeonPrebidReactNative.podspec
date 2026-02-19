@@ -29,8 +29,31 @@ Pod::Spec.new do |s|
   s.static_framework = true
   s.swift_version = "5.0"
   
-  s.pod_target_xcconfig = {
-    'DEFINES_MODULE' => 'YES',
-    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386'
-  }
+  # When consumer uses `use_frameworks!`, headers are inside .framework bundles
+  # and need explicit search paths for React Native internal C++ headers
+  if ENV['USE_FRAMEWORKS']
+    s.pod_target_xcconfig = {
+      'DEFINES_MODULE' => 'YES',
+      'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+      'HEADER_SEARCH_PATHS' => [
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-utils/React_utils.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-debug/React_debug.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-featureflags/React_featureflags.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-rendererdebug/React_rendererdebug.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-Fabric/React_Fabric.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-FabricComponents/React_FabricComponents.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-graphics/React_graphics.framework/Headers"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core"',
+        '"$(PODS_CONFIGURATION_BUILD_DIR)/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core/platform/ios"',
+        '"$(PODS_ROOT)/DoubleConversion"',
+        '"$(PODS_ROOT)/RCT-Folly"',
+      ].join(' ')
+    }
+  else
+    s.pod_target_xcconfig = {
+      'DEFINES_MODULE' => 'YES',
+      'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+    }
+  end
 end
