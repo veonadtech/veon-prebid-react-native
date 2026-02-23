@@ -34,6 +34,7 @@ Pod::Spec.new do |s|
   if ENV['USE_FRAMEWORKS']
     s.pod_target_xcconfig = {
       'DEFINES_MODULE' => 'YES',
+      'SWIFT_OBJC_INTERFACE_HEADER_NAME' => 'VeonPrebidReactNative-Swift.h',
       'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
       'HEADER_SEARCH_PATHS' => [
         '"$(PODS_CONFIGURATION_BUILD_DIR)/React-utils/React_utils.framework/Headers"',
@@ -53,6 +54,7 @@ Pod::Spec.new do |s|
   else
     s.pod_target_xcconfig = {
       'DEFINES_MODULE' => 'YES',
+      'SWIFT_OBJC_INTERFACE_HEADER_NAME' => 'VeonPrebidReactNative-Swift.h',
       'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
     }
   end
