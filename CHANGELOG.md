@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.1.4
+### Fixed
+* Android: Prebid UI operations now run on the main thread to prevent threading issues
+
+### Changed
+* Updated podspec with additional pod dependencies
+* Updated peer dependencies
+
 ## 0.1.3
 ### Fixed
 * iOS build failure (`'react/utils/fnv1a.h' file not found`) when using `use_frameworks! :linkage => :static` on React Native 0.76+
