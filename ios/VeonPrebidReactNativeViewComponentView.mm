@@ -77,6 +77,33 @@ using namespace facebook::react;
     [super updateProps:props oldProps:oldProps];
 }
 
+- (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args
+{
+    NSLog(@"VeonPrebid iOS: handleCommand: %@", commandName);
+
+    if ([commandName isEqualToString:@"loadBanner"]) {
+        [_view performSelector:@selector(loadBanner)];
+    } else if ([commandName isEqualToString:@"showBanner"]) {
+        [_view performSelector:@selector(showBanner)];
+    } else if ([commandName isEqualToString:@"hideBanner"]) {
+        [_view performSelector:@selector(hideBanner)];
+    } else if ([commandName isEqualToString:@"loadInterstitial"]) {
+        [_view performSelector:@selector(loadInterstitial)];
+    } else if ([commandName isEqualToString:@"showInterstitial"]) {
+        [_view performSelector:@selector(showInterstitial)];
+    } else if ([commandName isEqualToString:@"hideInterstitial"]) {
+        [_view performSelector:@selector(hideInterstitial)];
+    } else if ([commandName isEqualToString:@"pauseAuction"]) {
+        [_view performSelector:@selector(pauseAuction)];
+    } else if ([commandName isEqualToString:@"resumeAuction"]) {
+        [_view performSelector:@selector(resumeAuction)];
+    } else if ([commandName isEqualToString:@"destroyAuction"]) {
+        [_view performSelector:@selector(destroyAuction)];
+    } else {
+        [super handleCommand:commandName args:args];
+    }
+}
+
 - (void)updateEventEmitter:(EventEmitter::Shared const &)eventEmitter
 {
     [super updateEventEmitter:eventEmitter];
