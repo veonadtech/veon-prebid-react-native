@@ -1,6 +1,6 @@
 {
   "name": "setupad-prebid-react-native",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Prebid SDK for React Native",
   "main": "./lib/module/index.js",
   "expo": {

@@ -1,49 +1,23 @@
-const { withDangerousMod, withPlugins } = require('@expo/config-plugins');
+const { withDangerousMod } = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
 /**
  * Expo config plugin for setupad-prebid-react-native
  *
- * Automatically configures the consumer's iOS project with:
- * - use_frameworks! :linkage => :static (via Podfile.properties.json)
+ * Automatically configures the consumer's iOS Podfile with:
+ * - use_frameworks! :linkage => :static (required for Swift module resolution)
  * - Explicit VeonPrebid pod dependencies
  * - post_install hooks for DEFINES_MODULE and Swift module resolution
  */
-
-/**
- * Ensures ios.useFrameworks is set to "static" in Podfile.properties.json.
- * This is required for VeonPrebidMobile Swift module resolution.
- */
-function withUseFrameworks(config) {
+module.exports = function withVeonPrebid(config) {
   return withDangerousMod(config, [
     'ios',
     async (cfg) => {
-      const propsPath = path.join(
+      const podfilePath = path.join(
         cfg.modRequest.platformProjectRoot,
-        'Podfile.properties.json'
+        'Podfile'
       );
-
-      let props = {};
-      if (fs.existsSync(propsPath)) {
-        props = JSON.parse(fs.readFileSync(propsPath, 'utf8'));
-      }
-
-      if (props['ios.useFrameworks'] !== 'static') {
-        props['ios.useFrameworks'] = 'static';
-        fs.writeFileSync(propsPath, JSON.stringify(props, null, 2) + '\n');
-      }
-
-      return cfg;
-    },
-  ]);
-}
-
-function withVeonPrebidIOS(config) {
-  return withDangerousMod(config, [
-    'ios',
-    async (cfg) => {
-      const podfilePath = path.join(cfg.modRequest.platformProjectRoot, 'Podfile');
 
       if (!fs.existsSync(podfilePath)) {
         return cfg;
@@ -51,7 +25,17 @@ function withVeonPrebidIOS(config) {
 
       let podfile = fs.readFileSync(podfilePath, 'utf8');
 
-      // Add explicit Veon Prebid pod dependencies if not already present
+      // 1. Add use_frameworks! directly in Podfile
+      //    Cannot rely on Podfile.properties.json because pod install reads it
+      //    BEFORE dangerous mods write to it during first prebuild.
+      if (!podfile.includes("use_frameworks! :linkage => :static")) {
+        podfile = podfile.replace(
+          /use_react_native!\(/,
+          `use_frameworks! :linkage => :static\n\n  use_react_native!(`
+        );
+      }
+
+      // 2. Add explicit Veon Prebid pod dependencies
       if (!podfile.includes("pod 'VeonPrebidMobile'")) {
         podfile = podfile.replace(
           /use_react_native!\(/,
@@ -59,7 +43,7 @@ function withVeonPrebidIOS(config) {
         );
       }
 
-      // Add post_install hook for VeonPrebid module fixes
+      // 3. Add post_install hook for VeonPrebid module fixes
       if (!podfile.includes('VeonPrebidMobile Swift module')) {
         const postInstallHook = `
     # Fix for VeonPrebidMobile Swift module resolution
@@ -74,7 +58,6 @@ function withVeonPrebidIOS(config) {
       end
     end`;
 
-        // Insert before the last `end` of post_install block
         podfile = podfile.replace(
           /(react_native_post_install\([^)]*\)[\s\S]*?\))/,
           `$1\n${postInstallHook}`
@@ -85,8 +68,4 @@ function withVeonPrebidIOS(config) {
       return cfg;
     },
   ]);
-}
-
-module.exports = function withVeonPrebid(config) {
-  return withPlugins(config, [withUseFrameworks, withVeonPrebidIOS]);
 };
