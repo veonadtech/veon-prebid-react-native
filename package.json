@@ -3,6 +3,9 @@
   "version": "0.1.7",
   "description": "Prebid SDK for React Native",
   "main": "./lib/module/index.js",
+  "expo": {
+    "configPlugin": "./app.plugin.js"
+  },
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
     ".": {
@@ -10,6 +13,8 @@
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
+    "./app.plugin.js": "./app.plugin.js",
+    "./app.plugin": "./app.plugin.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -38,7 +43,7 @@
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
-    "prepare": "bob build",
+    "prepare": "bob build && node -e \"const fs=require('fs');const p='lib/module/VeonPrebidReactNativeViewNativeComponent';if(fs.existsSync(p+'.ts')&&!fs.existsSync(p+'.js')){fs.copyFileSync(p+'.ts',p+'.js')}\"",
     "release": "release-it --only-version"
   },
   "keywords": [
@@ -65,6 +70,7 @@
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.35.0",
     "@evilmartians/lefthook": "^1.12.3",
+    "@expo/config-plugins": "^55.0.6",
     "@react-native-community/cli": "20.0.1",
     "@react-native/babel-preset": "0.81.1",
     "@react-native/eslint-config": "^0.81.1",
@@ -86,8 +92,14 @@
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
+    "@expo/config-plugins": ">=7.0.0",
     "react": ">=18.0.0",
     "react-native": ">=0.76.0"
+  },
+  "peerDependenciesMeta": {
+    "@expo/config-plugins": {
+      "optional": true
+    }
   },
   "workspaces": [
     "example"

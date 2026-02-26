@@ -13,6 +13,8 @@ export interface AdEventPayload {
   adId?: string;
   sdk?: string;
   message?: string;
+  error?: string;
+  sdkType?: string;
 }
 
 /**

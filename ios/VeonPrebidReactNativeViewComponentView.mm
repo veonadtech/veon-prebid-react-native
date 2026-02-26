@@ -118,6 +118,8 @@ using namespace facebook::react;
             if (event[@"adId"]) data.adId = std::string([event[@"adId"] UTF8String]);
             if (event[@"sdk"]) data.sdk = std::string([event[@"sdk"] UTF8String]);
             if (event[@"message"]) data.message = std::string([event[@"message"] UTF8String]);
+            if (event[@"error"]) data.error = std::string([event[@"error"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
             emitter->onAdLoaded(data);
         }
     };
@@ -131,6 +133,8 @@ using namespace facebook::react;
             if (event[@"adId"]) data.adId = std::string([event[@"adId"] UTF8String]);
             if (event[@"sdk"]) data.sdk = std::string([event[@"sdk"] UTF8String]);
             if (event[@"message"]) data.message = std::string([event[@"message"] UTF8String]);
+            if (event[@"error"]) data.error = std::string([event[@"error"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
             emitter->onAdDisplayed(data);
         }
     };
@@ -144,6 +148,8 @@ using namespace facebook::react;
             if (event[@"adId"]) data.adId = std::string([event[@"adId"] UTF8String]);
             if (event[@"sdk"]) data.sdk = std::string([event[@"sdk"] UTF8String]);
             if (event[@"message"]) data.message = std::string([event[@"message"] UTF8String]);
+            if (event[@"error"]) data.error = std::string([event[@"error"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
             emitter->onAdFailed(data);
         }
     };
@@ -157,6 +163,8 @@ using namespace facebook::react;
             if (event[@"adId"]) data.adId = std::string([event[@"adId"] UTF8String]);
             if (event[@"sdk"]) data.sdk = std::string([event[@"sdk"] UTF8String]);
             if (event[@"message"]) data.message = std::string([event[@"message"] UTF8String]);
+            if (event[@"error"]) data.error = std::string([event[@"error"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
             emitter->onAdClicked(data);
         }
     };
@@ -170,6 +178,8 @@ using namespace facebook::react;
             if (event[@"adId"]) data.adId = std::string([event[@"adId"] UTF8String]);
             if (event[@"sdk"]) data.sdk = std::string([event[@"sdk"] UTF8String]);
             if (event[@"message"]) data.message = std::string([event[@"message"] UTF8String]);
+            if (event[@"error"]) data.error = std::string([event[@"error"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
             emitter->onAdClosed(data);
         }
     };
