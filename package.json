@@ -1,6 +1,6 @@
 {
   "name": "setupad-prebid-react-native",
-  "version": "0.1.4",
+  "version": "0.1.4.1",
   "description": "Prebid SDK for React Native",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -19,6 +19,7 @@
     "ios",
     "cpp",
     "*.podspec",
+    "app.plugin.js",
     "react-native.config.js",
     "!ios/build",
     "!android/build",
