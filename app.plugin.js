@@ -5,10 +5,40 @@ const path = require('path');
 /**
  * Expo config plugin for setupad-prebid-react-native
  *
- * Automatically configures the consumer's iOS Podfile with:
+ * Automatically configures the consumer's iOS project with:
+ * - use_frameworks! :linkage => :static (via Podfile.properties.json)
  * - Explicit VeonPrebid pod dependencies
  * - post_install hooks for DEFINES_MODULE and Swift module resolution
  */
+
+/**
+ * Ensures ios.useFrameworks is set to "static" in Podfile.properties.json.
+ * This is required for VeonPrebidMobile Swift module resolution.
+ */
+function withUseFrameworks(config) {
+  return withDangerousMod(config, [
+    'ios',
+    async (cfg) => {
+      const propsPath = path.join(
+        cfg.modRequest.platformProjectRoot,
+        'Podfile.properties.json'
+      );
+
+      let props = {};
+      if (fs.existsSync(propsPath)) {
+        props = JSON.parse(fs.readFileSync(propsPath, 'utf8'));
+      }
+
+      if (props['ios.useFrameworks'] !== 'static') {
+        props['ios.useFrameworks'] = 'static';
+        fs.writeFileSync(propsPath, JSON.stringify(props, null, 2) + '\n');
+      }
+
+      return cfg;
+    },
+  ]);
+}
+
 function withVeonPrebidIOS(config) {
   return withDangerousMod(config, [
     'ios',
@@ -58,5 +88,5 @@ function withVeonPrebidIOS(config) {
 }
 
 module.exports = function withVeonPrebid(config) {
-  return withPlugins(config, [withVeonPrebidIOS]);
+  return withPlugins(config, [withUseFrameworks, withVeonPrebidIOS]);
 };
