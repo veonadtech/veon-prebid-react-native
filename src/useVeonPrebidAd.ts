@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
-import type { AdController, AdConfig, AdEventListener } from './types';
+import type { AdController, VeonPrebidAdProps } from './types';
 
 /**
  * Hook for managing Veon Prebid ads programmatically
@@ -40,8 +40,7 @@ import type { AdController, AdConfig, AdEventListener } from './types';
  * ```
  */
 export function useVeonPrebidAd(
-  config: AdConfig,
-  _eventListener?: AdEventListener
+  config: Pick<VeonPrebidAdProps, 'adType' | 'configId' | 'adUnitId' | 'width' | 'height' | 'refreshInterval'>
 ) {
   const adRef = useRef<AdController>(null);
 

@@ -5,7 +5,6 @@ export { default as VeonPrebidSDK } from './VeonPrebidModule';
 export { AdType } from './types';
 export type {
   VeonPrebidViewProps,
-  AdType,
   AdEventData,
   AdController,
   VeonPrebidAdProps,
