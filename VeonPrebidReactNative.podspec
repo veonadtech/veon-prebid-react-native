@@ -23,8 +23,8 @@ Pod::Spec.new do |s|
   # Fabric (New Architecture) dependencies
   install_modules_dependencies(s)
   s.dependency "Google-Mobile-Ads-SDK", "12.3.0"
-  s.dependency "VeonPrebidMobileGAMEventHandlers", "0.0.4"
-  s.dependency "VeonPrebidMobile", "0.0.4"
+  s.dependency "VeonPrebidMobileGAMEventHandlers", "0.0.5"
+  s.dependency "VeonPrebidMobile", "0.0.5"
 
   s.static_framework = true
   s.swift_version = "5.0"
