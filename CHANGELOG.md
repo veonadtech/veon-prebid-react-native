@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 0.2.2
+### Fixed
+* iOS: `failed to verify module interface of 'PrebidMobileGAMEventHandlers'` — native pod (0.0.5) podspec'iga `-no-verify-emitted-module-interface` va `DEFINES_MODULE` qo'shildi
+* iOS: `'Commands' is a reserved export` — clean JS generator (`scripts/generate-native-component-js.js`) orqali TypeScript'siz toza JS fayl generatsiya qilinadi
+* Metro: `Could not find component config for native component` — `package.json` `exports` ga `"react-native": "./src/index.tsx"` qo'shildi, Metro endi TypeScript source'ni to'g'ridan-to'g'ri yuklaydi
+* Android: `Unknown command` — string command handler nom bo'yicha matching qo'shildi (`"loadBanner"` + `"0"` fallback)
+
+### Changed
+* Dropped Expo support — SDK now targets bare React Native CLI only
+* Removed `app.plugin.js` (Expo config plugin)
+* Removed `ios/veon_prebid_helper.rb` (post-install helper no longer needed)
+* Removed `@expo/config-plugins` from dependencies
+* iOS native dependencies upgraded: VeonPrebidMobile 0.0.4 → 0.0.5, VeonPrebidMobileGAMEventHandlers 0.0.4 → 0.0.5
+* Simplified example Podfile — redundant pod declarations removed (auto-linked via podspec)
+* Updated installation docs for bare RN CLI (EN + RU)
+
 ## 0.1.9
 ### Changed
 * Expo config plugin now writes `use_frameworks! :linkage => :static` directly to Podfile for reliable iOS builds
