@@ -3,9 +3,11 @@
   "version": "0.2.1",
   "description": "Prebid SDK for React Native",
   "main": "./lib/module/index.js",
+  "react-native": "./src/index.tsx",
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
     ".": {
+      "react-native": "./src/index.tsx",
       "source": "./src/index.tsx",
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
