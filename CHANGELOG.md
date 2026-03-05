@@ -1,11 +1,15 @@
 # CHANGELOG
 
+## 0.2.3
+### Fixed
+* Android: string command handler now matches by name (`"loadBanner"`) with numeric string fallback (`"0"`)
+
 ## 0.2.2
 ### Fixed
-* iOS: `failed to verify module interface of 'PrebidMobileGAMEventHandlers'` — native pod (0.0.5) podspec'iga `-no-verify-emitted-module-interface` va `DEFINES_MODULE` qo'shildi
-* iOS: `'Commands' is a reserved export` — clean JS generator (`scripts/generate-native-component-js.js`) orqali TypeScript'siz toza JS fayl generatsiya qilinadi
-* Metro: `Could not find component config for native component` — `package.json` `exports` ga `"react-native": "./src/index.tsx"` qo'shildi, Metro endi TypeScript source'ni to'g'ridan-to'g'ri yuklaydi
-* Android: `Unknown command` — string command handler nom bo'yicha matching qo'shildi (`"loadBanner"` + `"0"` fallback)
+* iOS: `failed to verify module interface of 'PrebidMobileGAMEventHandlers'` — added `-no-verify-emitted-module-interface` and `DEFINES_MODULE` to native pod (0.0.5) podspec
+* iOS: `'Commands' is a reserved export` — added clean JS generator (`scripts/generate-native-component-js.js`) to strip TypeScript syntax from codegen spec output
+* Metro: `Could not find component config for native component` — added `"react-native": "./src/index.tsx"` to package.json `exports` so Metro loads TypeScript source directly
+* Android: `Unknown command` — string command handler now matches by name (`"loadBanner"`) with numeric string fallback (`"0"`)
 
 ### Changed
 * Dropped Expo support — SDK now targets bare React Native CLI only
