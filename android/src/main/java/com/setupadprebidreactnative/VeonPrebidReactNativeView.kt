@@ -452,6 +452,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     Log.d(TAG, "View detached from window")
-    destroy()
+    // Do not destroy here — navigation causes detach/reattach.
+    // Cleanup is handled by ViewManager.onDropViewInstance() when the view is truly removed.
   }
 }
