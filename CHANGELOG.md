@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.2.4
+### Fixed
+* Android: banner ad disappearing after navigating away and returning — removed premature `destroy()` call from `onDetachedFromWindow` (cleanup now handled by `ViewManager.onDropViewInstance()` only)
+* Android: wrapped `receiveCommand` dispatches in `UiThreadUtil.runOnUiThread` to ensure command execution is serialized on the UI thread
+
 ## 0.2.3
 ### Fixed
 * Android: string command handler now matches by name (`"loadBanner"`) with numeric string fallback (`"0"`)
