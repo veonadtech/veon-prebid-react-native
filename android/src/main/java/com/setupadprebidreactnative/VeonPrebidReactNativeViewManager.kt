@@ -7,6 +7,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
@@ -109,17 +110,19 @@ class VeonPrebidReactNativeViewManager(
     ) {
         Log.d(TAG, "Received command (String): $commandId")
 
-        when (commandId) {
-            "loadBanner", COMMAND_LOAD_BANNER.toString() -> view.loadBanner()
-            "showBanner", COMMAND_SHOW_BANNER.toString() -> view.showBanner()
-            "hideBanner", COMMAND_HIDE_BANNER.toString() -> view.hideBanner()
-            "loadInterstitial", COMMAND_LOAD_INTERSTITIAL.toString() -> view.loadInterstitial()
-            "showInterstitial", COMMAND_SHOW_INTERSTITIAL.toString() -> view.showInterstitial()
-            "hideInterstitial", COMMAND_HIDE_INTERSTITIAL.toString() -> view.hideInterstitial()
-            "pauseAuction", COMMAND_PAUSE_AUCTION.toString() -> view.pauseAuction()
-            "resumeAuction", COMMAND_RESUME_AUCTION.toString() -> view.resumeAuction()
-            "destroyAuction", COMMAND_DESTROY_AUCTION.toString() -> view.destroyAuction()
-            else -> Log.w(TAG, "Unknown command: $commandId")
+        UiThreadUtil.runOnUiThread {
+            when (commandId) {
+                "loadBanner", COMMAND_LOAD_BANNER.toString() -> view.loadBanner()
+                "showBanner", COMMAND_SHOW_BANNER.toString() -> view.showBanner()
+                "hideBanner", COMMAND_HIDE_BANNER.toString() -> view.hideBanner()
+                "loadInterstitial", COMMAND_LOAD_INTERSTITIAL.toString() -> view.loadInterstitial()
+                "showInterstitial", COMMAND_SHOW_INTERSTITIAL.toString() -> view.showInterstitial()
+                "hideInterstitial", COMMAND_HIDE_INTERSTITIAL.toString() -> view.hideInterstitial()
+                "pauseAuction", COMMAND_PAUSE_AUCTION.toString() -> view.pauseAuction()
+                "resumeAuction", COMMAND_RESUME_AUCTION.toString() -> view.resumeAuction()
+                "destroyAuction", COMMAND_DESTROY_AUCTION.toString() -> view.destroyAuction()
+                else -> Log.w(TAG, "Unknown command: $commandId")
+            }
         }
     }
 
@@ -133,17 +136,19 @@ class VeonPrebidReactNativeViewManager(
     ) {
         Log.d(TAG, "Received command (Int): $commandId")
 
-        when (commandId) {
-            COMMAND_LOAD_BANNER -> view.loadBanner()
-            COMMAND_SHOW_BANNER -> view.showBanner()
-            COMMAND_HIDE_BANNER -> view.hideBanner()
-            COMMAND_LOAD_INTERSTITIAL -> view.loadInterstitial()
-            COMMAND_SHOW_INTERSTITIAL -> view.showInterstitial()
-            COMMAND_HIDE_INTERSTITIAL -> view.hideInterstitial()
-            COMMAND_PAUSE_AUCTION -> view.pauseAuction()
-            COMMAND_RESUME_AUCTION -> view.resumeAuction()
-            COMMAND_DESTROY_AUCTION -> view.destroyAuction()
-            else -> Log.w(TAG, "Unknown command: $commandId")
+        UiThreadUtil.runOnUiThread {
+            when (commandId) {
+                COMMAND_LOAD_BANNER -> view.loadBanner()
+                COMMAND_SHOW_BANNER -> view.showBanner()
+                COMMAND_HIDE_BANNER -> view.hideBanner()
+                COMMAND_LOAD_INTERSTITIAL -> view.loadInterstitial()
+                COMMAND_SHOW_INTERSTITIAL -> view.showInterstitial()
+                COMMAND_HIDE_INTERSTITIAL -> view.hideInterstitial()
+                COMMAND_PAUSE_AUCTION -> view.pauseAuction()
+                COMMAND_RESUME_AUCTION -> view.resumeAuction()
+                COMMAND_DESTROY_AUCTION -> view.destroyAuction()
+                else -> Log.w(TAG, "Unknown command: $commandId")
+            }
         }
     }
 
