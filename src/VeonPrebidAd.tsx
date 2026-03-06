@@ -1,26 +1,11 @@
 import { useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
 import {
-  UIManager,
-  findNodeHandle,
   StyleSheet,
   View,
   type ViewStyle,
 } from 'react-native';
-import VeonPrebidReactNativeView from './VeonPrebidReactNativeViewNativeComponent';
+import VeonPrebidReactNativeView, { Commands } from './VeonPrebidReactNativeViewNativeComponent';
 import type { VeonPrebidAdProps, AdController, AdEventData } from './types';
-
-// Command IDs - must match ViewManager (starts from 0 in iOS Old Architecture!)
-const Commands = {
-  loadBanner: 0,
-  showBanner: 1,
-  hideBanner: 2,
-  loadInterstitial: 3,
-  showInterstitial: 4,
-  hideInterstitial: 5,
-  pauseAuction: 6,
-  resumeAuction: 7,
-  destroyAuction: 8,
-} as const;
 
 const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
   (props, ref) => {
@@ -41,42 +26,38 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
 
     const viewRef = useRef<any>(null);
 
-    const executeCommand = useCallback(
-      (commandName: string, commandId: number) => {
-        const node = findNodeHandle(viewRef.current);
-        if (!node) {
-          console.warn(`Cannot execute ${commandName} - view not mounted`);
-          return;
-        }
-
-        console.log(
-          `Executing ${commandName} (ID: ${commandId}) on node: ${node}`
-        );
-        UIManager.dispatchViewManagerCommand(node, commandId, []);
-      },
-      []
-    );
-
     useImperativeHandle(
       ref,
       () => ({
-        loadBanner: () => executeCommand('loadBanner', Commands.loadBanner),
-        showBanner: () => executeCommand('showBanner', Commands.showBanner),
-        hideBanner: () => executeCommand('hideBanner', Commands.hideBanner),
-        loadInterstitial: () =>
-          executeCommand('loadInterstitial', Commands.loadInterstitial),
-        showInterstitial: () =>
-          executeCommand('showInterstitial', Commands.showInterstitial),
-        hideInterstitial: () =>
-          executeCommand('hideInterstitial', Commands.hideInterstitial),
-        pauseAuction: () =>
-          executeCommand('pauseAuction', Commands.pauseAuction),
-        resumeAuction: () =>
-          executeCommand('resumeAuction', Commands.resumeAuction),
-        destroyAuction: () =>
-          executeCommand('destroyAuction', Commands.destroyAuction),
+        loadBanner: () => {
+          if (viewRef.current) Commands.loadBanner(viewRef.current);
+        },
+        showBanner: () => {
+          if (viewRef.current) Commands.showBanner(viewRef.current);
+        },
+        hideBanner: () => {
+          if (viewRef.current) Commands.hideBanner(viewRef.current);
+        },
+        loadInterstitial: () => {
+          if (viewRef.current) Commands.loadInterstitial(viewRef.current);
+        },
+        showInterstitial: () => {
+          if (viewRef.current) Commands.showInterstitial(viewRef.current);
+        },
+        hideInterstitial: () => {
+          if (viewRef.current) Commands.hideInterstitial(viewRef.current);
+        },
+        pauseAuction: () => {
+          if (viewRef.current) Commands.pauseAuction(viewRef.current);
+        },
+        resumeAuction: () => {
+          if (viewRef.current) Commands.resumeAuction(viewRef.current);
+        },
+        destroyAuction: () => {
+          if (viewRef.current) Commands.destroyAuction(viewRef.current);
+        },
       }),
-      [executeCommand]
+      []
     );
 
     const handleAdLoaded = useCallback(

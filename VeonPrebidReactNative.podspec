@@ -23,19 +23,25 @@ Pod::Spec.new do |s|
   # Fabric (New Architecture) dependencies
   install_modules_dependencies(s)
   s.dependency "Google-Mobile-Ads-SDK", "12.3.0"
-  s.dependency "VeonPrebidMobileGAMEventHandlers", "0.0.4"
-  s.dependency "VeonPrebidMobile", "0.0.4"
-  
+  s.dependency "VeonPrebidMobileGAMEventHandlers", "0.0.5"
+  s.dependency "VeonPrebidMobile", "0.0.5"
+
   s.static_framework = true
   s.swift_version = "5.0"
-  
+
+  common_xcconfig = {
+    'DEFINES_MODULE' => 'YES',
+    'SWIFT_OBJC_INTERFACE_HEADER_NAME' => 'VeonPrebidReactNative-Swift.h',
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+    'OTHER_SWIFT_FLAGS' => '$(inherited) -no-verify-emitted-module-interface',
+  }
+
   # When consumer uses `use_frameworks!`, headers are inside .framework bundles
   # and need explicit search paths for React Native internal C++ headers
   if ENV['USE_FRAMEWORKS']
-    s.pod_target_xcconfig = {
-      'DEFINES_MODULE' => 'YES',
-      'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+    s.pod_target_xcconfig = common_xcconfig.merge({
       'HEADER_SEARCH_PATHS' => [
+        '"$(PODS_ROOT)/Headers/Private/Yoga"',
         '"$(PODS_CONFIGURATION_BUILD_DIR)/React-utils/React_utils.framework/Headers"',
         '"$(PODS_CONFIGURATION_BUILD_DIR)/React-debug/React_debug.framework/Headers"',
         '"$(PODS_CONFIGURATION_BUILD_DIR)/React-featureflags/React_featureflags.framework/Headers"',
@@ -49,11 +55,10 @@ Pod::Spec.new do |s|
         '"$(PODS_ROOT)/DoubleConversion"',
         '"$(PODS_ROOT)/RCT-Folly"',
       ].join(' ')
-    }
+    })
   else
-    s.pod_target_xcconfig = {
-      'DEFINES_MODULE' => 'YES',
-      'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
-    }
+    s.pod_target_xcconfig = common_xcconfig.merge({
+      'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_ROOT}/Headers/Private/Yoga"',
+    })
   end
 end

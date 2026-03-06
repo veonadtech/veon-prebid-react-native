@@ -1,5 +1,7 @@
 package com.setupadprebidreactnative
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -40,6 +42,9 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   // Track if parameters are complete
   private var paramsComplete = false
+
+  // Main thread handler to ensure all Prebid/WebView operations run on UI thread
+  private val mainHandler = Handler(Looper.getMainLooper())
 
   // Runnable for forcing layout after programmatic view changes
   private val measureAndLayout = Runnable {
@@ -108,13 +113,18 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       return
     }
 
-    if (bannerLoader == null) {
-      Log.d(TAG, "Banner loader is null, creating new one")
-      createBannerLoader()
-    }
+    // Ensure banner creation and loading happens on the main thread.
+    // Prebid OMID SDK registers a ContentObserver on the calling thread's Looper;
+    // if that thread is not main, WebView calls from the observer will crash.
+    runOnMainThread {
+      if (bannerLoader == null) {
+        Log.d(TAG, "Banner loader is null, creating new one")
+        createBannerLoader()
+      }
 
-    Log.d(TAG, "Calling bannerLoader.loadAd()")
-    bannerLoader?.loadAd()
+      Log.d(TAG, "Calling bannerLoader.loadAd()")
+      bannerLoader?.loadAd()
+    }
   }
 
   fun showBanner() {
@@ -250,19 +260,23 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       return
     }
 
-    if (interstitialLoader == null) {
-      createInterstitialLoader()
-    }
+    runOnMainThread {
+      if (interstitialLoader == null) {
+        createInterstitialLoader()
+      }
 
-    Log.d(TAG, "Calling interstitialLoader.loadAd()")
-    interstitialLoader?.loadAd()
+      Log.d(TAG, "Calling interstitialLoader.loadAd()")
+      interstitialLoader?.loadAd()
+    }
   }
 
   fun showInterstitial() {
     Log.d(TAG, "showInterstitial called")
-    interstitialLoader?.showAd() ?: run {
-      Log.w(TAG, "No interstitial to show")
-      sendEvent("onAdFailed", "No interstitial loaded yet")
+    runOnMainThread {
+      interstitialLoader?.showAd() ?: run {
+        Log.w(TAG, "No interstitial to show")
+        sendEvent("onAdFailed", "No interstitial loaded yet")
+      }
     }
   }
 
@@ -412,9 +426,27 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun destroy() {
     Log.d(TAG, "Destroying view")
-    destroyBannerLoader()
-    destroyInterstitialLoader()
-    paramsComplete = false
+    runOnMainThread {
+      destroyBannerLoader()
+      destroyInterstitialLoader()
+      paramsComplete = false
+    }
+  }
+
+  /**
+   * Run a block on the main thread. If already on main, execute immediately.
+   * This prevents Prebid OMID SDK from binding ContentObservers to background threads,
+   * which would cause WebView calls from non-main threads and crash the app.
+   */
+  private fun runOnMainThread(block: () -> Unit) {
+    val isMainThread = Looper.myLooper() == Looper.getMainLooper()
+    if (isMainThread) {
+      Log.d(TAG, "runOnMainThread: already on main thread, executing directly")
+      block()
+    } else {
+      Log.w(TAG, "runOnMainThread: called from background thread '${Thread.currentThread().name}', dispatching to main")
+      mainHandler.post(block)
+    }
   }
 
   override fun onDetachedFromWindow() {

@@ -14,11 +14,11 @@ export interface VeonPrebidViewProps {
   height?: number;
   refreshInterval?: number;
   style?: any;
-  onAdLoaded?: (event: { nativeEvent: { configId?: string; adUnitId?: string } }) => void;
-  onAdDisplayed?: (event: { nativeEvent: { configId?: string; adUnitId?: string } }) => void;
-  onAdFailed?: (event: { nativeEvent: { error: string } }) => void;
-  onAdClicked?: (event: { nativeEvent: { configId?: string; adUnitId?: string } }) => void;
-  onAdClosed?: (event: { nativeEvent: { configId?: string; adUnitId?: string } }) => void;
+  onAdLoaded?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
+  onAdDisplayed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
+  onAdFailed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
+  onAdClicked?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
+  onAdClosed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
 }
 
 export interface AdEventData {
