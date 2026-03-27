@@ -4,17 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-React Native bridge library (`setupad-prebid-react-native`) for integrating the Veon Prebid SDK with Google Ad Manager (GAM). Supports three ad types: Banner, Interstitial, and Rewarded Video using a waterfall approach (Prebid first, GAM fallback).
+React Native bridge library (`setupad-prebid-react-native`) for integrating the Veon Prebid SDK with Google Ad Manager (GAM). Supports three ad types: Banner, Interstitial, and Rewarded Video using a waterfall approach (Prebid first, GAM fallback). This is a **Fabric-enabled** library (React Native New Architecture) — Expo is not supported, bare RN CLI only.
 
 ## Common Commands
 
 ```bash
 # Development
 yarn install          # Install all dependencies (root + example workspaces)
-yarn typecheck        # Run TypeScript type checking
+yarn typecheck        # Run TypeScript type checking (strict mode, no unused locals/params)
 yarn lint             # ESLint across all JS/TS/TSX files
-yarn test             # Run Jest tests
-yarn prepare          # Build library via react-native-builder-bob (outputs to /lib/)
+yarn test             # Run Jest tests (react-native preset)
+yarn prepare          # Build via react-native-builder-bob + generate codegen JS shim
 yarn clean            # Remove build artifacts
 
 # Example app
@@ -23,7 +23,7 @@ yarn example ios      # Run example app on iOS
 yarn example start    # Start Metro bundler
 
 # Release
-yarn release          # Bump version, tag, and publish via release-it
+yarn release          # Bump version, tag, and publish via release-it (conventional-changelog, Angular preset)
 ```
 
 ## Architecture
@@ -33,7 +33,7 @@ yarn release          # Bump version, tag, and publish via release-it
 - **`VeonPrebidModule.ts`** — Singleton class wrapping the native module for SDK initialization (`initializeSDK`, `getSDKVersion`). Communicates with native via `NativeModules`.
 - **`VeonPrebidAd.tsx`** — Main React component for rendering ads. Uses `forwardRef` + `useImperativeHandle` to expose imperative methods (loadBanner, showBanner, loadInterstitial, etc.) to parent components.
 - **`useVeonPrebidAd.ts`** — Hook for programmatic ad control via ref.
-- **`VeonPrebidReactNativeViewNativeComponent.ts`** — Codegen-based native component definition (Fabric-compatible).
+- **`VeonPrebidReactNativeViewNativeComponent.ts`** — Codegen-based native component definition (Fabric). The `prepare` script runs `scripts/generate-native-component-js.js` to strip TypeScript from this file for the published JS output.
 - **`Commands.ts`** — Command ID constants dispatched to native view managers (0=loadBanner through 8=destroyAuction).
 - **`types.ts`** — Shared type definitions (`AdType`, event interfaces, config types).
 
@@ -47,7 +47,7 @@ yarn release          # Bump version, tag, and publish via release-it
 
 **Android (`android/src/main/java/com/setupadprebidreactnative/`, Kotlin):**
 - `VeonPrebidReactNativeModule.kt` — Native module for SDK init with event emission.
-- `VeonPrebidReactNativeView.kt` — FrameLayout-based view using `MultiBannerLoader`/`MultiInterstitialAdLoader` from Prebid SDK.
+- `VeonPrebidReactNativeView.kt` — FrameLayout-based view using `MultiBannerLoader`/`MultiInterstitialAdLoader` from Prebid SDK. Native commands must run on UI thread (`runOnUiThread`).
 - `VeonPrebidReactNativeViewManager.kt` — SimpleViewManager handling props and command dispatch.
 - `VeonPrebidReactNativePackage.kt` — Package registration.
 
@@ -60,7 +60,10 @@ yarn release          # Bump version, tag, and publish via release-it
 ## Build & Dependencies
 
 - **Builder**: `react-native-builder-bob` (ESM + TypeScript targets, output in `/lib/`)
-- **Monorepo**: Yarn workspaces (root + `example/`)
-- **iOS deps**: PrebidMobile 0.0.4, Google-Mobile-Ads-SDK 12.3.0 (min iOS 12.0)
-- **Android deps**: Prebid SDK 0.1.1 (JitPack), play-services-ads 22.2.0 (minSdk 21, compileSdk 35)
-- **Pre-commit hooks**: Lefthook runs ESLint + typecheck on staged files
+- **Monorepo**: Yarn 3.6.1 workspaces (root + `example/`)
+- **Peer requirements**: React >= 18.0.0, React Native >= 0.76.0
+- **iOS deps**: VeonPrebidMobile 0.0.5, VeonPrebidMobileGAMEventHandlers 0.0.5, Google-Mobile-Ads-SDK 12.3.0 (min iOS 12.0, Swift 5.0)
+- **Android deps**: Veon Prebid SDK 0.1.1 (JitPack — core, eventhandlers, mobile, prebidorg), play-services-ads 22.2.0 (minSdk 21)
+- **Codegen**: `codegenConfig` in package.json defines Fabric specs — iOS component provider `VeonPrebidReactNativeViewComponentView`, Android package `com.setupadprebidreactnative`
+- **Pre-commit hooks**: Lefthook is installed but hooks are currently commented out in `lefthook.yml`
+- **Commit convention**: Conventional Commits enforced via commitlint (`@commitlint/config-conventional`)

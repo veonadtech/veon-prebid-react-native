@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.2.6
+### Fixed
+* Android: banner ad disappearing when navigating to another screen — added `onAttachedToWindow` to re-display banner after reattach and `onDetachedFromWindow` now pauses refresh to prevent stale view replacements
+
 ## 0.2.5
 ### Fixed
 * iOS: The Ad with custom sizes is not loaded from GAM Admanager with error "Invalid ad width or height".

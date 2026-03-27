@@ -449,9 +449,25 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    Log.d(TAG, "View attached to window, isBannerShowing=$isBannerShowing")
+
+    // Resume banner refresh that was paused on detach
+    bannerView?.setAutoRefreshDelay(refreshInterval)
+
+    // Re-display banner if it was showing before detach
+    if (isBannerShowing && adView != null) {
+      Log.d(TAG, "Re-displaying banner after reattach")
+      post { showBanner() }
+    }
+  }
+
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     Log.d(TAG, "View detached from window")
+    // Pause banner refresh while detached to prevent stale view replacements
+    bannerView?.stopRefresh()
     // Do not destroy here — navigation causes detach/reattach.
     // Cleanup is handled by ViewManager.onDropViewInstance() when the view is truly removed.
   }
