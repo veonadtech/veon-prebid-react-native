@@ -374,8 +374,4 @@ class VeonPrebidReactNativeView: UIView {
         ])
     }
 
-    func adSizeFor(cgSize: CGSize) -> AdSize {
-        return AdSize(size: cgSize, flags: 0)
-    }
-
 }

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.2.5
+### Fixed
+* iOS: The Ad with custom sizes is not loaded from GAM Admanager with error "Invalid ad width or height".
+### Changed
+* Android SDK bumped to ver 0.2.0
+
 ## 0.2.4
 ### Fixed
 * Android: banner ad disappearing after navigating away and returning — removed premature `destroy()` call from `onDetachedFromWindow` (cleanup now handled by `ViewManager.onDropViewInstance()` only)
