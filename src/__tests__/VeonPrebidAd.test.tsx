@@ -410,6 +410,53 @@ describe('VeonPrebidAd', () => {
     });
   });
 
+  describe('null ref safety', () => {
+    it('should not crash when calling commands before ref is attached', () => {
+      const ref = createRef<AdController>();
+      // Don't render — ref.current stays null
+
+      expect(() => {
+        ref.current?.loadBanner();
+        ref.current?.showBanner();
+        ref.current?.hideBanner();
+        ref.current?.loadInterstitial();
+        ref.current?.showInterstitial();
+        ref.current?.hideInterstitial();
+        ref.current?.pauseAuction();
+        ref.current?.resumeAuction();
+        ref.current?.destroyAuction();
+      }).not.toThrow();
+
+      // No commands should have been dispatched
+      expect(Commands.loadBanner).not.toHaveBeenCalled();
+      expect(Commands.showBanner).not.toHaveBeenCalled();
+      expect(Commands.destroyAuction).not.toHaveBeenCalled();
+    });
+
+    it('should not dispatch commands when ref is null after unmount', () => {
+      const ref = createRef<AdController>();
+      const { unmount } = render(
+        <VeonPrebidAd
+          ref={ref}
+          adType="banner"
+          configId="test"
+          adUnitId="/test/unit"
+          width={320}
+          height={50}
+        />
+      );
+
+      // Unmount — ref becomes null
+      unmount();
+
+      expect(() => {
+        ref.current?.loadBanner();
+        ref.current?.showBanner();
+        ref.current?.destroyAuction();
+      }).not.toThrow();
+    });
+  });
+
   describe('container sizing', () => {
     it('should set container size to width/height for banner ads', () => {
       const { toJSON } = render(
