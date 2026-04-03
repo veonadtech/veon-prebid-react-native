@@ -16,7 +16,6 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/veonadtech/veon-prebid-react-native.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
-  s.exclude_files = "ios/Tests/**/*"
 
   # Install all dependencies
   s.dependency "React-Core"

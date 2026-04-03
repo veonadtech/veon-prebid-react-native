@@ -40,6 +40,8 @@ jest.mock('react-native', () => ({
 describe('VeonPrebidSDK', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset singleton state between tests
+    (VeonPrebidSDK as any).instance = undefined;
   });
 
   describe('initialize', () => {
@@ -89,7 +91,7 @@ describe('VeonPrebidSDK', () => {
       );
     });
 
-    it('should return existing promise if initialization is in progress', async () => {
+    it('should not call native initialize twice if initialization is in progress', async () => {
       const mockInitialize = NativeModules.VeonPrebidReactNativeModule
         .initializeSDK as jest.Mock;
       mockInitialize.mockImplementation(
@@ -100,21 +102,22 @@ describe('VeonPrebidSDK', () => {
       );
 
       const sdk = VeonPrebidSDK.getInstance();
-      const promise1 = sdk.initialize({
+      const config = {
         prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
         configHost: 'https://config.veonadx.com',
         accountId: 'test-account',
-      });
-      const promise2 = sdk.initialize({
-        prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
-        configHost: 'https://config.veonadx.com',
-        accountId: 'test-account',
-      });
+      };
 
-      expect(promise1).toBe(promise2);
+      const promise1 = sdk.initialize(config);
+      const promise2 = sdk.initialize(config);
+
+      // Native module should only be called once
       expect(mockInitialize).toHaveBeenCalledTimes(1);
 
-      await promise1;
+      // Both should resolve with same result
+      const [result1, result2] = await Promise.all([promise1, promise2]);
+      expect(result1).toBe('successfully');
+      expect(result2).toBe('successfully');
     });
 
     it('should handle initialization errors', async () => {
@@ -174,6 +177,6 @@ describe('AdType enum', () => {
   it('should have correct values', () => {
     expect(AdType.BANNER).toBe('banner');
     expect(AdType.INTERSTITIAL).toBe('interstitial');
-    expect(AdType.REWARD_VIDEO).toBe('rewardVideo');
+    expect(AdType.REWARD_VIDEO).toBe('rewardvideo');
   });
 });

@@ -184,27 +184,18 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         view.setValue(block, forKey: "onAdClosed")
     }
 
-    // MARK: - Event callback fires when set
+    // MARK: - Event callback wiring
 
-    func testOnAdFailedCallbackFires() {
-        let expectation = self.expectation(description: "onAdFailed called")
+    func testOnAdFailedBlockIsAssignable() {
+        var callbackFired = false
+        view.onAdFailed = { _ in callbackFired = true }
 
-        view.onAdFailed = { eventData in
-            XCTAssertEqual(eventData?["error"] as? String, "Config ID or Ad Unit ID is null")
-            expectation.fulfill()
-        }
+        // Verify block was assigned (not nil)
+        XCTAssertNotNil(view.onAdFailed)
 
-        // loadBanner without configId/adUnitId should trigger onAdFailed
-        // Note: this only works if the view sends the event synchronously
-        // In practice, Prebid SDK may not be initialized, so this tests the guard path
-        view.loadBanner()
-
-        // loadBanner early-returns with NSLog when params are nil, no event sent.
-        // Fulfill manually since this tests the wiring, not the SDK.
-        // The responds(to:) and KVC tests above verify the bridge is intact.
-        expectation.fulfill()
-
-        waitForExpectations(timeout: 1)
+        // Invoke directly to verify wiring
+        view.onAdFailed?([:])
+        XCTAssertTrue(callbackFired)
     }
 
     // MARK: - DestroyAuction cleanup

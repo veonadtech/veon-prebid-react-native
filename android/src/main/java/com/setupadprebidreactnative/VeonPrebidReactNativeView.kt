@@ -457,9 +457,15 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     bannerView?.setAutoRefreshDelay(refreshInterval)
 
     // Re-display banner if it was showing before detach
-    if (isBannerShowing && adView != null) {
-      Log.d(TAG, "Re-displaying banner after reattach")
-      post { showBanner() }
+    if (isBannerShowing) {
+      post {
+        if (adView != null) {
+          showBanner()
+          Log.d(TAG, "Re-displaying banner after reattach")
+        } else {
+          Log.w(TAG, "showBanner skipped: adView null after reattach")
+        }
+      }
     }
   }
 
