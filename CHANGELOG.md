@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 0.2.7
+### Fixed
+* Android: "Could not find generated setter for class VeonPrebidReactNativeViewManager" — implemented Codegen-generated `VeonPrebidReactNativeViewManagerInterface` and `VeonPrebidReactNativeViewManagerDelegate` for Fabric (New Architecture) compatibility while preserving `@ReactProp` annotations for Old Architecture backward compatibility
+
+### Added
+* Android unit tests (46 tests) — ViewManager prop/command dispatch via delegate and Paper fallback
+* iOS unit tests (32 tests) — native view KVC prop setting, selector-based command dispatch, event wiring
+* JS unit tests (31 tests) — component prop forwarding, imperative command dispatch, event callbacks, VeonPrebidView ref forwarding, null ref safety after unmount
+
+## 0.2.6
+### Fixed
+* Android: banner ad disappearing when navigating to another screen — added `onAttachedToWindow` to re-display banner after reattach and `onDetachedFromWindow` now pauses refresh to prevent stale view replacements
+
 ## 0.2.5
 ### Fixed
 * iOS: The Ad with custom sizes is not loaded from GAM Admanager with error "Invalid ad width or height".

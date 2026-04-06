@@ -45,6 +45,10 @@ android {
     }
   }
 
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
+
   lintOptions {
     disable "GradleCompatible"
   }
@@ -87,4 +91,9 @@ dependencies {
   implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers:0.2.0'
   implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.2.0'
   implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.2.0'
+
+  // Test dependencies
+  testImplementation 'junit:junit:4.13.2'
+  testImplementation 'org.mockito:mockito-inline:5.2.0'
+  testImplementation 'org.mockito.kotlin:mockito-kotlin:5.3.1'
 }
