@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 0.2.8
+* Android SDK version updated to 0.3.0
+
 ## 0.2.7
 ### Fixed
 * Android: "Could not find generated setter for class VeonPrebidReactNativeViewManager" — implemented Codegen-generated `VeonPrebidReactNativeViewManagerInterface` and `VeonPrebidReactNativeViewManagerDelegate` for Fabric (New Architecture) compatibility while preserving `@ReactProp` annotations for Old Architecture backward compatibility
