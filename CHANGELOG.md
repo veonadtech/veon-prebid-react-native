@@ -1,6 +1,12 @@
 # CHANGELOG
 
 ## 0.2.8
+* **fix(init):** `VeonPrebidSDK.initialize()` is now guaranteed to resolve or reject within `initTimeoutMillis` (default 15 s) — previously the promise could hang indefinitely on network stalls, causing publishers' splash screens to freeze.
+  * iOS: `Prebid.initializeSDK` status/error parameters are now honoured — `.failed` rejects with `INIT_FAILED` (previously resolved as "successfully"); added 20 s native safety timer.
+  * Android: removed `NO_ACTIVITY` hard-fail on cold-start splash (falls back to application context); reordered `setPbsDebug` / `setTimeoutMillis` / `setShareGeoLocation` / `checkGoogleMobileAdsCompatibility` to run **before** `initializeSdk`; added 20 s native safety timer; concurrent-init guard.
+  * JS: added `initTimeoutMillis` to `PrebidConfig`; `initialize()` wraps the native call in `Promise.race` and clears the cached promise on any rejection so retries work.
+  * New rejection codes: `INIT_TIMEOUT`, `INIT_TIMEOUT_NATIVE`, `INIT_IN_PROGRESS`, `NO_CONTEXT` (Android).
+* iOS native dependencies upgraded: VeonPrebidMobile 0.0.5 → 0.1.0, VeonPrebidMobileGAMEventHandlers 0.0.5 → 0.1.0, Google-Mobile-Ads-SDK 12.3.0 → 13.0.0 (required by the new event handlers pod)
 * Android SDK version updated to 0.3.0
 ## Fixed
 * Make NativeDataAsset len optional like iOS
