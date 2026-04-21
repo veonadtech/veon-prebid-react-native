@@ -59,16 +59,6 @@ export interface PrebidConfig {
   prebidHost: string;
   configHost: string;
   accountId: string;
-  /**
-   * Bid-request timeout in milliseconds (applied inside the Prebid auction).
-   * Default: 3000.
-   */
   timeoutMillis?: number;
-  /**
-   * Max wall-clock time (ms) the `initialize()` promise may stay pending
-   * before it rejects with `INIT_TIMEOUT`. Separate from `timeoutMillis`
-   * (which governs bid requests, not init). Default: 15000.
-   */
-  initTimeoutMillis?: number;
   pbsDebug?: boolean;
 }

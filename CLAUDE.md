@@ -252,7 +252,7 @@ yarn release          # Bump version, tag, and publish via release-it (conventio
 - **Builder**: `react-native-builder-bob` (ESM + TypeScript targets, output in `/lib/`)
 - **Monorepo**: Yarn 3.6.1 workspaces (root + `example/`)
 - **Peer requirements**: React >= 18.0.0, React Native >= 0.76.0
-- **iOS deps**: VeonPrebidMobile 0.1.0, VeonPrebidMobileGAMEventHandlers 0.1.0, Google-Mobile-Ads-SDK 13.0.0 (min iOS 12.0, Swift 5.0)
+- **iOS deps**: VeonPrebidMobile 0.0.5, VeonPrebidMobileGAMEventHandlers 0.0.5, Google-Mobile-Ads-SDK 12.3.0 (min iOS 12.0, Swift 5.0)
 - **Android deps**: Veon Prebid SDK 0.1.1 (JitPack — core, eventhandlers, mobile, prebidorg), play-services-ads 22.2.0 (minSdk 21)
 - **Codegen**: `codegenConfig` in package.json defines Fabric specs — iOS component provider `VeonPrebidReactNativeViewComponentView`, Android package `com.setupadprebidreactnative`
 - **Pre-commit hooks**: Lefthook is installed but hooks are currently commented out in `lefthook.yml`

@@ -66,42 +66,15 @@ allprojects {
 ```typescript
 import { VeonPrebidSDK } from 'setupad-prebid-react-native';
 
-try {
-  // Initialize once at app startup. The returned promise is guaranteed to
-  // settle (resolve or reject) — it will never stay pending indefinitely.
-  await VeonPrebidSDK.getInstance().initialize({
-    prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
-    configHost: 'https://config.veonadx.com',
-    accountId: 'YOUR_ACCOUNT_ID',
-    timeoutMillis: 3000,      // bid-request timeout
-    initTimeoutMillis: 15000, // optional; max wait for init (default 15s)
-    pbsDebug: __DEV__,
-  });
-} catch (error) {
-  // Publisher is responsible for deciding whether to proceed without ads,
-  // retry, or surface the error — the promise will never hang.
-  console.error('Prebid init failed:', error);
-}
+// Initialize once at app startup
+await VeonPrebidSDK.getInstance().initialize({
+  prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
+  configHost: 'https://config.veonadx.com',
+  accountId: 'YOUR_ACCOUNT_ID',
+  timeoutMillis: 3000,
+  pbsDebug: __DEV__,
+});
 ```
-
-#### `initialize()` contract
-
-The returned promise always settles within `initTimeoutMillis` (default **15000 ms**).
-
-Resolve values: `"successfully"`, `"already initialized"`, `"warning: ..."`, `"skipped"`.
-
-Rejection codes (on `error.code`):
-
-| Code | Meaning |
-|------|---------|
-| `INIT_TIMEOUT` | JS-layer timeout fired (the canonical safety net). |
-| `INIT_TIMEOUT_NATIVE` | Native-layer safety timer fired (rare; behind the JS guard). |
-| `INIT_FAILED` | Prebid SDK reported a failure status. |
-| `INIT_ERROR` | Unexpected exception during initialization. |
-| `INIT_IN_PROGRESS` | `initialize()` was called again while a previous call was still running. |
-| `NO_CONTEXT` (Android only) | Neither current activity nor application context was available. |
-
-After any rejection, `initialize()` may be called again — the internal cache is cleared on every failure so publishers can safely retry.
 
 ### 2. Display Banner Ad
 

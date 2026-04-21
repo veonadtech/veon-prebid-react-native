@@ -87,10 +87,10 @@ dependencies {
   implementation 'com.google.android.gms:play-services-ads:22.2.0'
 
   // Veon Prebid SDK
-  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.3.0'
-  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers:0.3.0'
-  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.3.0'
-  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.3.0'
+  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.2.0'
+  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers:0.2.0'
+  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.2.0'
+  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.2.0'
 
   // Test dependencies
   testImplementation 'junit:junit:4.13.2'

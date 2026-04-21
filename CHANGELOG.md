@@ -1,31 +1,5 @@
 # CHANGELOG
 
-## 0.3.0
-* **fix(init):** `VeonPrebidSDK.initialize()` is now guaranteed to resolve or reject within `initTimeoutMillis` (default 15 s) — previously the promise could hang indefinitely on network stalls, causing publishers' splash screens to freeze.
-  * iOS: `Prebid.initializeSDK` status/error parameters are now honoured — `.failed` rejects with `INIT_FAILED` (previously resolved as "successfully"); added 20 s native safety timer.
-  * Android: removed `NO_ACTIVITY` hard-fail on cold-start splash (falls back to application context); reordered `setPbsDebug` / `setTimeoutMillis` / `setShareGeoLocation` / `checkGoogleMobileAdsCompatibility` to run **before** `initializeSdk`; added 20 s native safety timer; concurrent-init guard.
-  * JS: added `initTimeoutMillis` to `PrebidConfig`; `initialize()` wraps the native call in `Promise.race` and clears the cached promise on any rejection so retries work.
-  * New rejection codes: `INIT_TIMEOUT`, `INIT_TIMEOUT_NATIVE`, `INIT_IN_PROGRESS`, `NO_CONTEXT` (Android).
-* iOS native dependencies upgraded: VeonPrebidMobile 0.0.5 → 0.1.0, VeonPrebidMobileGAMEventHandlers 0.0.5 → 0.1.0, Google-Mobile-Ads-SDK 12.3.0 → 13.0.0 (required by the new event handlers pod)
-* Android SDK version updated to 0.3.0
-## Fixed
-* Make NativeDataAsset len optional like iOS
-* hb_cache_id_local is not added to targetingKeywords if adObject is null
-* Fix bar layout params is null
-* Fix Adm native wrapper parsing
-* Exception during looking for cache
-* Fix Unit tests
-## Changed
-* Send ifa_type for IFA
-* Resume refreshing for Mediation banner
-* Readable exceptions and useless logs
-* ORTB config for ad unit level (Aligns with iOS implementation)
-* Reusable rendering API banner (removes the destruction of Prebid WebView when it is detached
-  from the screen. So now the Prebid banner can be used in the RecyclerView and can be reused
-  many times to show the advertisement faster.)
-* minSdkVersion upgraded to 23
-* GAM SDK upgraded to 25.1.0
-
 ## 0.2.7
 ### Fixed
 * Android: "Could not find generated setter for class VeonPrebidReactNativeViewManager" — implemented Codegen-generated `VeonPrebidReactNativeViewManagerInterface` and `VeonPrebidReactNativeViewManagerDelegate` for Fabric (New Architecture) compatibility while preserving `@ReactProp` annotations for Old Architecture backward compatibility
