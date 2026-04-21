@@ -75,6 +75,7 @@ class VeonPrebidSDK {
       configHost,
       accountId,
       timeoutMillis = 3000,
+      initTimeoutMillis = 15000,
       pbsDebug = false,
     } = config;
 
@@ -83,23 +84,47 @@ class VeonPrebidSDK {
       configHost,
       accountId,
       timeoutMillis,
+      initTimeoutMillis,
       pbsDebug,
     });
 
-    const promise = VeonPrebidReactNativeModule.initializeSDK(
-      prebidHost,
-      configHost,
-      accountId,
-      timeoutMillis,
-      pbsDebug
-    )
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+    const timeoutPromise = new Promise<string>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        const err: Error & { code?: string } = new Error(
+          `Prebid SDK initialization exceeded ${initTimeoutMillis}ms`
+        );
+        err.code = 'INIT_TIMEOUT';
+        reject(err);
+      }, initTimeoutMillis);
+    });
+
+    const clearTimer = () => {
+      if (timeoutHandle !== null) {
+        clearTimeout(timeoutHandle);
+        timeoutHandle = null;
+      }
+    };
+
+    const nativePromise: Promise<string> =
+      VeonPrebidReactNativeModule.initializeSDK(
+        prebidHost,
+        configHost,
+        accountId,
+        timeoutMillis,
+        pbsDebug
+      );
+
+    const promise = Promise.race([nativePromise, timeoutPromise])
       .then((result: string) => {
+        clearTimer();
         console.log('Veon Prebid SDK initialized successfully:', result);
         this.isInitialized = true;
         this.initializationPromise = null;
         return result;
       })
       .catch((error: any) => {
+        clearTimer();
         console.error('Failed to initialize Veon Prebid SDK:', error);
         this.initializationPromise = null;
         throw error;
