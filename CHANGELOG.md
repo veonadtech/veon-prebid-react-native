@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.2.8
+## 0.3.0
 * **fix(init):** `VeonPrebidSDK.initialize()` is now guaranteed to resolve or reject within `initTimeoutMillis` (default 15 s) — previously the promise could hang indefinitely on network stalls, causing publishers' splash screens to freeze.
   * iOS: `Prebid.initializeSDK` status/error parameters are now honoured — `.failed` rejects with `INIT_FAILED` (previously resolved as "successfully"); added 20 s native safety timer.
   * Android: removed `NO_ACTIVITY` hard-fail on cold-start splash (falls back to application context); reordered `setPbsDebug` / `setTimeoutMillis` / `setShareGeoLocation` / `checkGoogleMobileAdsCompatibility` to run **before** `initializeSdk`; added 20 s native safety timer; concurrent-init guard.
