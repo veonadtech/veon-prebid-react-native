@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.4.0
+### Changed
+* Android version upgraded to 0.3.2
+* Enables video player click for rewarded ads with clickthrough URL
+* GAM ad is requested even if the Prebid SDK is not initialized
+
 ## 0.3.0
 * **fix(init):** `VeonPrebidSDK.initialize()` is now guaranteed to resolve or reject within `initTimeoutMillis` (default 15 s) — previously the promise could hang indefinitely on network stalls, causing publishers' splash screens to freeze.
   * iOS: `Prebid.initializeSDK` status/error parameters are now honoured — `.failed` rejects with `INIT_FAILED` (previously resolved as "successfully"); added 20 s native safety timer.
