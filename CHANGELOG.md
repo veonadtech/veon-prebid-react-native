@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 0.5.0
+### Added
+* **Rewarded video ad format** — full support across JS, iOS, and Android (was missing from the React Native port, only iOS had partial scaffolding):
+  * New commands: `loadRewarded` / `showRewarded` exposed via `AdController`, `useVeonPrebidAd` hook, and the native component spec
+  * New event: `onAdRewardEarned` with `{ configId, adUnitId, sdkType, rewardType, rewardAmount }` payload
+  * New type: `RewardData` exported from the package root
+* `RewardedExample` component in `example/src/BannerExample.tsx` showing the minimal load → show → reward earned flow
+* Rewarded section in the example app demonstrating explicit load/show buttons and the reward earned Alert
+* Unit test coverage for the new rewarded commands, event propagation, and hook type-guards (49/49 tests passing)
+
+### Fixed
+* iOS: `rewardedAdUserDidEarnReward` delegate now forwards the reward payload to JS (previously only logged via `NSLog`)
+* iOS: `loadRewardVideo` now clears the prior `RewardedAdUnit` delegate before reassigning — prevents duplicate `onAdLoaded` / `onAdFailed` callbacks on rapid double-loads
+
+### Changed
+* iOS: removed auto-show inside `rewardedAdDidReceiveAd` — publishers must now call `showRewarded()` explicitly (matches Android behaviour and the interstitial pattern)
+* iOS: `loadInterstitial` / `showInterstitial` / `hideInterstitial` no longer branch internally based on `adType === "rewardvideo"` — use the dedicated `loadRewarded` / `showRewarded` commands instead
+* Android: rewarded `sdkType` is detected from `bidResponse.winningBid` (Prebid vs GAM) instead of being hardcoded
+* iOS: rewarded `sdkType` documented as always reporting `"prebid"` — Prebid iOS SDK does not publicly expose the mediated source for rewarded ads (unlike Android)
+
 ## 0.4.0
 ### Changed
 * Android version upgraded to 0.3.2
