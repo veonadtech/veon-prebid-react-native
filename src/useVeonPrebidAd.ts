@@ -111,6 +111,28 @@ export function useVeonPrebidAd(
   }, [config.adType]);
 
   /**
+   * Load rewarded video ad
+   */
+  const loadRewarded = useCallback(() => {
+    if (config.adType !== 'rewardvideo') {
+      console.warn('loadRewarded called but ad type is not rewardvideo');
+      return;
+    }
+    adRef.current?.loadRewarded();
+  }, [config.adType]);
+
+  /**
+   * Show rewarded video ad
+   */
+  const showRewarded = useCallback(() => {
+    if (config.adType !== 'rewardvideo') {
+      console.warn('showRewarded called but ad type is not rewardvideo');
+      return;
+    }
+    adRef.current?.showRewarded();
+  }, [config.adType]);
+
+  /**
    * Pause ad auction (for banners)
    */
   const pauseAuction = useCallback(() => {
@@ -149,6 +171,8 @@ export function useVeonPrebidAd(
     loadInterstitial,
     showInterstitial,
     hideInterstitial,
+    loadRewarded,
+    showRewarded,
     pauseAuction,
     resumeAuction,
     destroyAuction,

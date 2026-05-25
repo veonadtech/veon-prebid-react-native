@@ -19,6 +19,7 @@ export interface VeonPrebidViewProps {
   onAdFailed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
   onAdClicked?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
   onAdClosed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
+  onAdRewardEarned?: (event: { nativeEvent: RewardData }) => void;
 }
 
 export interface AdEventData {
@@ -28,6 +29,14 @@ export interface AdEventData {
   error?: string;
 }
 
+export interface RewardData {
+  configId?: string;
+  adUnitId?: string;
+  sdkType?: string;
+  rewardType?: string;
+  rewardAmount?: number;
+}
+
 export interface AdController {
   loadBanner: () => void;
   showBanner: () => void;
@@ -35,6 +44,8 @@ export interface AdController {
   loadInterstitial: () => void;
   showInterstitial: () => void;
   hideInterstitial: () => void;
+  loadRewarded: () => void;
+  showRewarded: () => void;
   pauseAuction: () => void;
   resumeAuction: () => void;
   destroyAuction: () => void;
@@ -53,6 +64,7 @@ export interface VeonPrebidAdProps {
   onAdFailed?: (data: AdEventData) => void;
   onAdClicked?: (data: AdEventData) => void;
   onAdClosed?: (data: AdEventData) => void;
+  onAdRewardEarned?: (data: RewardData) => void;
 }
 
 export interface PrebidConfig {

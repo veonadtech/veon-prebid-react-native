@@ -12,11 +12,16 @@ import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.events.RCTEventEmitter
 import org.prebid.mobile.AdSize
 import org.prebid.mobile.api.data.SdkType
+import org.prebid.mobile.api.exceptions.AdException
 import org.prebid.mobile.api.multiadloader.MultiBannerLoader
 import org.prebid.mobile.api.multiadloader.MultiInterstitialAdLoader
 import org.prebid.mobile.api.multiadloader.listeners.MultiBannerViewListener
 import org.prebid.mobile.api.multiadloader.listeners.MultiInterstitialAdListener
 import org.prebid.mobile.api.rendering.BannerView
+import org.prebid.mobile.api.rendering.RewardedAdUnit
+import org.prebid.mobile.api.rendering.listeners.RewardedAdUnitListener
+import org.prebid.mobile.eventhandlers.GamRewardedEventHandler
+import org.prebid.mobile.rendering.interstitial.rewarded.Reward
 
 class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameLayout(reactContext) {
   private val TAG = "VeonPrebidRN"
@@ -24,6 +29,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   // Ad loaders
   private var bannerLoader: MultiBannerLoader? = null
   private var interstitialLoader: MultiInterstitialAdLoader? = null
+  private var rewardedAdUnit: RewardedAdUnit? = null
 
   // Ad parameters - stored individually for compatibility with ViewManager
   private var adType: String? = null
@@ -340,6 +346,99 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
+  fun loadRewarded() {
+    Log.d(TAG, "loadRewarded called - configId=$configId, adUnitId=$adUnitId")
+    if (configId == null || adUnitId == null) {
+      Log.e(TAG, "Cannot load rewarded: configId or adUnitId is null")
+      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
+      return
+    }
+
+    runOnMainThread {
+      if (rewardedAdUnit == null) {
+        Log.d(TAG, "Rewarded ad unit is null, creating new one")
+        createRewardedAdUnit()
+      }
+
+      Log.d(TAG, "Calling rewardedAdUnit.loadAd()")
+      rewardedAdUnit?.loadAd()
+    }
+  }
+
+  fun showRewarded() {
+    Log.d(TAG, "showRewarded called")
+    runOnMainThread {
+      rewardedAdUnit?.show() ?: run {
+        Log.w(TAG, "No rewarded loaded to show")
+        sendEvent("onAdFailed", "No rewarded loaded yet")
+      }
+    }
+  }
+
+  private fun createRewardedAdUnit() {
+    Log.d(TAG, "Creating rewarded ad unit - configId: $configId, adUnitId: $adUnitId")
+
+    try {
+      val activity = reactContext.currentActivity
+      if (activity == null) {
+        Log.e(TAG, "Cannot create rewarded ad unit: currentActivity is null")
+        sendEvent("onAdFailed", "Current activity is null")
+        return
+      }
+
+      val eventHandler = GamRewardedEventHandler(activity, adUnitId!!)
+      rewardedAdUnit = RewardedAdUnit(reactContext, configId!!, eventHandler)
+
+      Log.d(TAG, "RewardedAdUnit created successfully")
+
+      rewardedAdUnit?.setRewardedAdUnitListener(object : RewardedAdUnitListener {
+        override fun onAdLoaded(rewardedAdUnit: RewardedAdUnit?) {
+          val sdk = rewardedSdkType(rewardedAdUnit)
+          Log.d(TAG, "Rewarded LOADED from ${sdk.name}")
+          sendEvent("onAdLoaded", sdk)
+        }
+
+        override fun onAdDisplayed(rewardedAdUnit: RewardedAdUnit?) {
+          val sdk = rewardedSdkType(rewardedAdUnit)
+          Log.d(TAG, "Rewarded DISPLAYED from ${sdk.name}")
+          sendEvent("onAdDisplayed", sdk)
+        }
+
+        override fun onAdFailed(rewardedAdUnit: RewardedAdUnit?, exception: AdException?) {
+          val errorMsg = exception?.message ?: "Unknown error"
+          val sdk = rewardedSdkType(rewardedAdUnit)
+          Log.e(TAG, "Rewarded FAILED: $errorMsg (SDK: ${sdk.name})")
+          sendEvent("onAdFailed", errorMsg, sdk)
+        }
+
+        override fun onAdClicked(rewardedAdUnit: RewardedAdUnit?) {
+          val sdk = rewardedSdkType(rewardedAdUnit)
+          Log.d(TAG, "Rewarded clicked from ${sdk.name}")
+          sendEvent("onAdClicked", sdk)
+        }
+
+        override fun onAdClosed(rewardedAdUnit: RewardedAdUnit?) {
+          val sdk = rewardedSdkType(rewardedAdUnit)
+          Log.d(TAG, "Rewarded closed from ${sdk.name}")
+          sendEvent("onAdClosed", sdk)
+        }
+
+        override fun onUserEarnedReward(rewardedAdUnit: RewardedAdUnit?, reward: Reward?) {
+          val rewardType = reward?.type ?: ""
+          val rewardAmount = reward?.count ?: 0
+          val sdk = rewardedSdkType(rewardedAdUnit)
+          Log.d(TAG, "User earned reward - type: $rewardType, amount: $rewardAmount, sdk: ${sdk.name}")
+          sendRewardEvent(rewardType, rewardAmount, sdk)
+        }
+      })
+
+      Log.d(TAG, "Rewarded listener set successfully")
+    } catch (e: Exception) {
+      Log.e(TAG, "Error creating rewarded ad unit", e)
+      sendEvent("onAdFailed", "Error creating rewarded: ${e.message}")
+    }
+  }
+
   // Pause/Resume/Destroy methods for compatibility
   fun pauseAuction() {
     Log.d(TAG, "pauseAuction called")
@@ -374,6 +473,33 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       Log.d(TAG, "Event sent: $eventName - SDK: ${sdk.name}")
     } catch (e: Exception) {
       Log.e(TAG, "Error sending event: $eventName", e)
+    }
+  }
+
+  // Detect which SDK actually rendered the rewarded ad.
+  // The Prebid rewarded path has no MultiRewardedAdLoader (unlike banner/interstitial),
+  // so we approximate from the auction's winning bid: if Prebid had a winner, treat as
+  // Prebid render; otherwise GAM mediation rendered it.
+  private fun rewardedSdkType(unit: RewardedAdUnit?): SdkType {
+    return if (unit?.bidResponse?.winningBid != null) SdkType.PREBID else SdkType.GAM
+  }
+
+  // Send rewarded reward earned event
+  private fun sendRewardEvent(rewardType: String, rewardAmount: Int, sdk: SdkType) {
+    val event: WritableMap = Arguments.createMap()
+    event.putString("configId", configId)
+    event.putString("adUnitId", adUnitId)
+    event.putString("sdkType", getSdkTypeName(sdk))
+    event.putString("rewardType", rewardType)
+    event.putInt("rewardAmount", rewardAmount)
+
+    try {
+      reactContext
+        .getJSModule(RCTEventEmitter::class.java)
+        .receiveEvent(id, "onAdRewardEarned", event)
+      Log.d(TAG, "Event sent: onAdRewardEarned - type: $rewardType, amount: $rewardAmount, sdk: ${sdk.name}")
+    } catch (e: Exception) {
+      Log.e(TAG, "Error sending event: onAdRewardEarned", e)
     }
   }
 
@@ -424,11 +550,23 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
+  private fun destroyRewardedAdUnit() {
+    try {
+      rewardedAdUnit?.destroy()
+      Log.d(TAG, "Rewarded ad unit destroyed")
+    } catch (e: Exception) {
+      Log.w(TAG, "Error destroying rewarded: $e")
+    } finally {
+      rewardedAdUnit = null
+    }
+  }
+
   fun destroy() {
     Log.d(TAG, "Destroying view")
     runOnMainThread {
       destroyBannerLoader()
       destroyInterstitialLoader()
+      destroyRewardedAdUnit()
       paramsComplete = false
     }
   }

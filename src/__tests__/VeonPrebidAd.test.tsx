@@ -27,6 +27,8 @@ jest.mock('../VeonPrebidReactNativeViewNativeComponent', () => {
       pauseAuction: jest.fn(),
       resumeAuction: jest.fn(),
       destroyAuction: jest.fn(),
+      loadRewarded: jest.fn(),
+      showRewarded: jest.fn(),
     },
   };
 });
@@ -263,6 +265,42 @@ describe('VeonPrebidAd', () => {
 
       expect(Commands.destroyAuction).toHaveBeenCalledTimes(1);
     });
+
+    it('should dispatch loadRewarded command', () => {
+      const ref = createRef<AdController>();
+      render(
+        <VeonPrebidAd
+          ref={ref}
+          adType="rewardvideo"
+          configId="test"
+          adUnitId="/test/unit"
+        />
+      );
+
+      act(() => {
+        ref.current?.loadRewarded();
+      });
+
+      expect(Commands.loadRewarded).toHaveBeenCalledTimes(1);
+    });
+
+    it('should dispatch showRewarded command', () => {
+      const ref = createRef<AdController>();
+      render(
+        <VeonPrebidAd
+          ref={ref}
+          adType="rewardvideo"
+          configId="test"
+          adUnitId="/test/unit"
+        />
+      );
+
+      act(() => {
+        ref.current?.showRewarded();
+      });
+
+      expect(Commands.showRewarded).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('event callbacks', () => {
@@ -362,6 +400,40 @@ describe('VeonPrebidAd', () => {
       expect(onAdClosed).toHaveBeenCalledTimes(1);
     });
 
+    it('should call onAdRewardEarned when native emits reward event', () => {
+      const onAdRewardEarned = jest.fn();
+      const { getByTestId } = render(
+        <VeonPrebidAd
+          adType="rewardvideo"
+          configId="test"
+          adUnitId="/test/unit"
+          onAdRewardEarned={onAdRewardEarned}
+        />
+      );
+
+      const nativeView = getByTestId('native-view');
+      act(() => {
+        nativeView.props.onAdRewardEarned({
+          nativeEvent: {
+            configId: 'test',
+            adUnitId: '/test/unit',
+            sdkType: 'prebid',
+            rewardType: 'coins',
+            rewardAmount: 50,
+          },
+        });
+      });
+
+      expect(onAdRewardEarned).toHaveBeenCalledTimes(1);
+      expect(onAdRewardEarned).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rewardType: 'coins',
+          rewardAmount: 50,
+          sdkType: 'prebid',
+        })
+      );
+    });
+
     it('should call onAdDisplayed when native emits display event', () => {
       const onAdDisplayed = jest.fn();
       const { getByTestId } = render(
@@ -422,6 +494,8 @@ describe('VeonPrebidAd', () => {
         ref.current?.loadInterstitial();
         ref.current?.showInterstitial();
         ref.current?.hideInterstitial();
+        ref.current?.loadRewarded();
+        ref.current?.showRewarded();
         ref.current?.pauseAuction();
         ref.current?.resumeAuction();
         ref.current?.destroyAuction();
@@ -430,6 +504,8 @@ describe('VeonPrebidAd', () => {
       // No commands should have been dispatched
       expect(Commands.loadBanner).not.toHaveBeenCalled();
       expect(Commands.showBanner).not.toHaveBeenCalled();
+      expect(Commands.loadRewarded).not.toHaveBeenCalled();
+      expect(Commands.showRewarded).not.toHaveBeenCalled();
       expect(Commands.destroyAuction).not.toHaveBeenCalled();
     });
 

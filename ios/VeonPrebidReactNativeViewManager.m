@@ -38,6 +38,8 @@ RCT_EXTERN_METHOD(hideInterstitial:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(pauseAuction:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(resumeAuction:(nonnull NSNumber *)node)
 RCT_EXTERN_METHOD(destroyAuction:(nonnull NSNumber *)node)
+RCT_EXTERN_METHOD(loadRewarded:(nonnull NSNumber *)node)
+RCT_EXTERN_METHOD(showRewarded:(nonnull NSNumber *)node)
 
 // Events (must be AFTER commands)
 RCT_EXPORT_VIEW_PROPERTY(onAdLoaded, RCTDirectEventBlock)
@@ -45,5 +47,6 @@ RCT_EXPORT_VIEW_PROPERTY(onAdDisplayed, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onAdFailed, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onAdClicked, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onAdClosed, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onAdRewardEarned, RCTDirectEventBlock)
 
 @end

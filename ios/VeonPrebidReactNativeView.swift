@@ -111,6 +111,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc var onAdFailed: RCTDirectEventBlock?
     @objc var onAdClicked: RCTDirectEventBlock?
     @objc var onAdClosed: RCTDirectEventBlock?
+    @objc var onAdRewardEarned: RCTDirectEventBlock?
 
     // MARK: - Constants
 
@@ -208,39 +209,54 @@ class VeonPrebidReactNativeView: UIView {
 
     @objc func loadInterstitial() {
         guard let configId = adParameters.configId,
-              let adUnitId = adParameters.adUnitId,
-              let adType = adParameters.adType else {
+              let adUnitId = adParameters.adUnitId else {
             NSLog("VeonPrebid iOS: Cannot load interstitial - missing parameters")
             return
         }
 
         NSLog("VeonPrebid iOS: Loading interstitial")
-
-        if adType.lowercased() == AdType.rewardVideo {
-            loadRewardVideo(configId: configId, adUnitId: adUnitId)
-        } else {
-            loadInterstitialRendering(configId: configId, adUnitId: adUnitId)
-        }
+        loadInterstitialRendering(configId: configId, adUnitId: adUnitId)
     }
 
     @objc func showInterstitial() {
         NSLog("VeonPrebid iOS: Showing interstitial")
 
-        if let prebidInterstitial = prebidInterstitial {
-            let rootViewController = getRootViewController()
-            let controllerToPresent = rootViewController.presentedViewController ?? rootViewController
-            prebidInterstitial.show(from: controllerToPresent)
-        } else if let rewardedAdUnit = rewardedAdUnit, rewardedAdUnit.isReady {
-            rewardedAdUnit.show(from: getRootViewController())
+        guard let prebidInterstitial = prebidInterstitial else {
+            NSLog("VeonPrebid iOS: No interstitial loaded yet")
+            return
         }
+        let rootViewController = getRootViewController()
+        let controllerToPresent = rootViewController.presentedViewController ?? rootViewController
+        prebidInterstitial.show(from: controllerToPresent)
     }
 
     @objc func hideInterstitial() {
         NSLog("VeonPrebid iOS: Hiding interstitial")
         prebidInterstitial?.delegate = nil
         prebidInterstitial = nil
-        rewardedAdUnit?.delegate = nil
-        rewardedAdUnit = nil
+    }
+
+    @objc func loadRewarded() {
+        guard let configId = adParameters.configId,
+              let adUnitId = adParameters.adUnitId else {
+            NSLog("VeonPrebid iOS: Cannot load rewarded - missing parameters")
+            return
+        }
+
+        NSLog("VeonPrebid iOS: Loading rewarded")
+        loadRewardVideo(configId: configId, adUnitId: adUnitId)
+    }
+
+    @objc func showRewarded() {
+        NSLog("VeonPrebid iOS: Showing rewarded")
+
+        guard let rewardedAdUnit = rewardedAdUnit, rewardedAdUnit.isReady else {
+            NSLog("VeonPrebid iOS: No rewarded loaded yet or not ready")
+            return
+        }
+        let rootViewController = getRootViewController()
+        let controllerToPresent = rootViewController.presentedViewController ?? rootViewController
+        rewardedAdUnit.show(from: controllerToPresent)
     }
 
     @objc func pauseAuction() {
@@ -334,6 +350,10 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     private func loadRewardVideo(configId: String, adUnitId: String) {
+        // Detach any prior delegate to prevent in-flight callbacks from a stale unit
+        rewardedAdUnit?.delegate = nil
+        rewardedAdUnit = nil
+
         let eventHandler = GAMRewardedAdEventHandler(adUnitID: adUnitId)
         rewardedAdUnit = RewardedAdUnit(configID: configId, eventHandler: eventHandler)
         rewardedAdUnit?.delegate = self

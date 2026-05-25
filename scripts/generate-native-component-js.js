@@ -41,6 +41,8 @@ export const Commands = codegenNativeCommands({
     'pauseAuction',
     'resumeAuction',
     'destroyAuction',
+    'loadRewarded',
+    'showRewarded',
   ],
 });
 

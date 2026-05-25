@@ -4,8 +4,15 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import VeonPrebidReactNativeView, { Commands } from './VeonPrebidReactNativeViewNativeComponent';
-import type { VeonPrebidAdProps, AdController, AdEventData } from './types';
+import VeonPrebidReactNativeView, {
+  Commands,
+} from './VeonPrebidReactNativeViewNativeComponent';
+import type {
+  VeonPrebidAdProps,
+  AdController,
+  AdEventData,
+  RewardData,
+} from './types';
 
 const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
   (props, ref) => {
@@ -21,6 +28,7 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
       onAdFailed,
       onAdClicked,
       onAdClosed,
+      onAdRewardEarned,
       style,
     } = props;
 
@@ -46,6 +54,12 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
         },
         hideInterstitial: () => {
           if (viewRef.current) Commands.hideInterstitial(viewRef.current);
+        },
+        loadRewarded: () => {
+          if (viewRef.current) Commands.loadRewarded(viewRef.current);
+        },
+        showRewarded: () => {
+          if (viewRef.current) Commands.showRewarded(viewRef.current);
         },
         pauseAuction: () => {
           if (viewRef.current) Commands.pauseAuction(viewRef.current);
@@ -105,6 +119,15 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
       [onAdClosed]
     );
 
+    const handleAdRewardEarned = useCallback(
+      (event: any) => {
+        const data: RewardData = event.nativeEvent;
+        console.log('Ad reward earned:', data);
+        onAdRewardEarned?.(data);
+      },
+      [onAdRewardEarned]
+    );
+
     const containerStyle: ViewStyle = {
       overflow: 'hidden',
       ...(adType === 'banner' && width && height
@@ -129,6 +152,7 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
           onAdFailed={handleAdFailed}
           onAdClicked={handleAdClicked}
           onAdClosed={handleAdClosed}
+          onAdRewardEarned={handleAdRewardEarned}
         />
       </View>
     );

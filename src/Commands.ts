@@ -10,6 +10,8 @@ export interface VeonPrebidCommands {
   readonly pauseAuction: Int32;
   readonly resumeAuction: Int32;
   readonly destroyAuction: Int32;
+  readonly loadRewarded: Int32;
+  readonly showRewarded: Int32;
 }
 
 export const VeonPrebidCommands: VeonPrebidCommands = {
@@ -22,4 +24,6 @@ export const VeonPrebidCommands: VeonPrebidCommands = {
   pauseAuction: 7,
   resumeAuction: 8,
   destroyAuction: 9,
+  loadRewarded: 10,
+  showRewarded: 11,
 };

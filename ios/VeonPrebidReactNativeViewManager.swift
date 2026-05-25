@@ -24,7 +24,9 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
                 "hideInterstitial": 5,
                 "pauseAuction": 6,
                 "resumeAuction": 7,
-                "destroyAuction": 8
+                "destroyAuction": 8,
+                "loadRewarded": 9,
+                "showRewarded": 10
             ]
         ]
     }
@@ -99,6 +101,22 @@ class VeonPrebidReactNativeViewManager: RCTViewManager {
         DispatchQueue.main.async {
             if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
                 view.destroyAuction()
+            }
+        }
+    }
+
+    @objc func loadRewarded(_ node: NSNumber) {
+        DispatchQueue.main.async {
+            if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
+                view.loadRewarded()
+            }
+        }
+    }
+
+    @objc func showRewarded(_ node: NSNumber) {
+        DispatchQueue.main.async {
+            if let view = self.bridge.uiManager.view(forReactTag: node) as? VeonPrebidReactNativeView {
+                view.showRewarded()
             }
         }
     }

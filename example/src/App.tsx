@@ -15,6 +15,7 @@ import {
   AdType,
   type AdController,
   type AdEventData,
+  type RewardData,
 } from 'setupad-prebid-react-native';
 
 /**
@@ -30,6 +31,9 @@ export default function App() {
   // Interstitial ad refs
   const interstitialAdRef = useRef<AdController>(null);
 
+  // Rewarded ad refs
+  const rewardedAdRef = useRef<AdController>(null);
+
   /**
    * Initialize Prebid SDK on mount
    */
@@ -39,9 +43,9 @@ export default function App() {
         console.log('Initializing Veon Prebid SDK...');
 
         await VeonPrebidSDK.getInstance().initialize({
-          prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
+          prebidHost: 'https://prebid-server-test-j.prebid.org/openrtb2/auction',
           configHost: 'https://dcdn.veonadx.com/sdk/uz.beeline.odp/config.json',
-          accountId: 'com.veon.oq', // Replace with your account ID
+          accountId: '0689a263-318d-448b-a3d4-b02e8a709d9d', // Replace with your account ID
           timeoutMillis: 3000,
           pbsDebug: __DEV__,
         });
@@ -98,6 +102,34 @@ export default function App() {
   };
 
   /**
+   * Rewarded Ad Event Handlers
+   */
+  const handleRewardedLoaded = (data: AdEventData) => {
+    console.log('Rewarded loaded:', data);
+    Alert.alert(
+      'Rewarded',
+      `Ad loaded from ${data.sdkType}. Tap "Show Rewarded" to play.`
+    );
+  };
+
+  const handleRewardedFailed = (data: AdEventData) => {
+    console.error('Rewarded failed:', data.error, `SDK: ${data.sdkType}`);
+    Alert.alert('Rewarded Error', `${data.error}\n\nSDK: ${data.sdkType}`);
+  };
+
+  const handleRewardedClosed = (data: AdEventData) => {
+    console.log('Rewarded closed:', data);
+  };
+
+  const handleRewardEarned = (data: RewardData) => {
+    console.log('Reward earned:', data);
+    Alert.alert(
+      'Reward Earned!',
+      `Type: ${data.rewardType || '(none)'}\nAmount: ${data.rewardAmount ?? 0}`
+    );
+  };
+
+  /**
    * Banner Ad Controls
    */
   const loadBanner = () => {
@@ -126,6 +158,19 @@ export default function App() {
   const showInterstitial = () => {
     console.log('Showing interstitial...');
     interstitialAdRef.current?.showInterstitial();
+  };
+
+  /**
+   * Rewarded Ad Controls
+   */
+  const loadRewarded = () => {
+    console.log('Loading rewarded...');
+    rewardedAdRef.current?.loadRewarded();
+  };
+
+  const showRewarded = () => {
+    console.log('Showing rewarded...');
+    rewardedAdRef.current?.showRewarded();
   };
 
   return (
@@ -157,10 +202,10 @@ export default function App() {
                 <VeonPrebidAd
                   ref={bannerAdRef}
                   adType={AdType.BANNER}
-                  configId="beeline_uz_android_universal_300x250" // Replace with your config ID
-                  adUnitId="ca-app-pub-3940256099942544/9214589741 we" // Replace with your ad unit ID
-                  width={300}
-                  height={250}
+                  configId="beeline_uz_android_manual_veon_test_320x50" // Replace with your config ID
+                  adUnitId="ca-app-pub-3940256099942544/9214589741 ҳжк" // Replace with your ad unit ID
+                  width={320}
+                  height={50}
                   refreshInterval={30}
                   onAdLoaded={handleBannerLoaded}
                   onAdFailed={handleBannerFailed}
@@ -186,8 +231,8 @@ export default function App() {
               <VeonPrebidAd
                 ref={interstitialAdRef}
                 adType={AdType.INTERSTITIAL}
-                configId="beeline_uz_android_wheel_interstitial_test" // Replace with your config ID
-                adUnitId="ca-app-pub-3940256099942544/1033173712" // Replace with your ad unit ID
+                configId="beeline_uz_android_universal_interstitial" // Replace with your config ID
+                adUnitId="ca-app-pub-3940256099942544/1033173712 dfas" // Replace with your ad unit ID
                 onAdLoaded={handleInterstitialLoaded}
                 onAdFailed={handleInterstitialFailed}
                 onAdClosed={handleInterstitialClosed}
@@ -197,6 +242,28 @@ export default function App() {
                 <Button title="Load Interstitial" onPress={loadInterstitial} />
                 <View style={styles.buttonSpacer} />
                 <Button title="Show Interstitial" onPress={showInterstitial} />
+              </View>
+            </View>
+
+            {/* Rewarded Video Ad Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Rewarded Video Ad</Text>
+
+              <VeonPrebidAd
+                ref={rewardedAdRef}
+                adType={AdType.REWARD_VIDEO}
+                configId="prebid-demo-video-rewarded-endcard-time-close-button" // Replace with your config ID
+                adUnitId="ca-app-pub-3940256099942544/5224354917 dfg" // Replace with your ad unit ID
+                onAdLoaded={handleRewardedLoaded}
+                onAdFailed={handleRewardedFailed}
+                onAdClosed={handleRewardedClosed}
+                onAdRewardEarned={handleRewardEarned}
+              />
+
+              <View style={styles.buttonGroup}>
+                <Button title="Load Rewarded" onPress={loadRewarded} />
+                <View style={styles.buttonSpacer} />
+                <Button title="Show Rewarded" onPress={showRewarded} />
               </View>
             </View>
           </>

@@ -27,6 +27,8 @@ describe('useVeonPrebidAd', () => {
       expect(result.current.loadInterstitial).toBeDefined();
       expect(result.current.showInterstitial).toBeDefined();
       expect(result.current.hideInterstitial).toBeDefined();
+      expect(result.current.loadRewarded).toBeDefined();
+      expect(result.current.showRewarded).toBeDefined();
       expect(result.current.pauseAuction).toBeDefined();
       expect(result.current.resumeAuction).toBeDefined();
       expect(result.current.destroyAuction).toBeDefined();
@@ -89,6 +91,67 @@ describe('useVeonPrebidAd', () => {
       });
 
       expect(warnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rewarded commands', () => {
+    it('should warn when calling rewarded methods with banner adType', () => {
+      const { result } = renderHook(() =>
+        useVeonPrebidAd({
+          adType: 'banner',
+          configId: 'test-config',
+          adUnitId: '/test/unit',
+          width: 320,
+          height: 50,
+        })
+      );
+
+      act(() => {
+        result.current.loadRewarded();
+        result.current.showRewarded();
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'loadRewarded called but ad type is not rewardvideo'
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        'showRewarded called but ad type is not rewardvideo'
+      );
+    });
+
+    it('should not warn for rewarded methods with rewardvideo adType', () => {
+      const { result } = renderHook(() =>
+        useVeonPrebidAd({
+          adType: 'rewardvideo',
+          configId: 'test-config',
+          adUnitId: '/test/unit',
+        })
+      );
+
+      act(() => {
+        result.current.loadRewarded();
+        result.current.showRewarded();
+      });
+
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('should warn when calling banner methods with rewardvideo adType', () => {
+      const { result } = renderHook(() =>
+        useVeonPrebidAd({
+          adType: 'rewardvideo',
+          configId: 'test-config',
+          adUnitId: '/test/unit',
+        })
+      );
+
+      act(() => {
+        result.current.loadBanner();
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'loadBanner called but ad type is not banner'
+      );
     });
   });
 
