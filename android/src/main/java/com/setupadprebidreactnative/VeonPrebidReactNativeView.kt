@@ -112,12 +112,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun loadBanner() {
     Log.d(TAG, "loadBanner called - configId=$configId, adUnitId=$adUnitId")
-
-    if (configId == null || adUnitId == null) {
-      Log.e(TAG, "Cannot load banner: configId or adUnitId is null")
-      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
-      return
-    }
+    val (cfg, aid) = requireParams("load banner") ?: return
 
     // Ensure banner creation and loading happens on the main thread.
     // Prebid OMID SDK registers a ContentObserver on the calling thread's Looper;
@@ -125,7 +120,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     runOnMainThread {
       if (bannerLoader == null) {
         Log.d(TAG, "Banner loader is null, creating new one")
-        createBannerLoader()
+        createBannerLoader(cfg, aid)
       }
 
       Log.d(TAG, "Calling bannerLoader.loadAd()")
@@ -190,15 +185,15 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
-  private fun createBannerLoader() {
+  private fun createBannerLoader(configId: String, adUnitId: String) {
     Log.d(TAG, "Creating banner loader - size: ${width}x${height}, configId: $configId, adUnitId: $adUnitId, refresh: $refreshInterval")
 
     try {
       bannerLoader = MultiBannerLoader(
         context = context,
         adSize = AdSize(width, height),
-        configId = configId!!,
-        gamAdUnitId = adUnitId!!,
+        configId = configId,
+        gamAdUnitId = adUnitId,
         autoRefreshDelay = refreshInterval
       )
 
@@ -260,15 +255,11 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun loadInterstitial() {
     Log.d(TAG, "loadInterstitial called")
-    if (configId == null || adUnitId == null) {
-      Log.e(TAG, "Cannot load interstitial: configId or adUnitId is null")
-      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
-      return
-    }
+    val (cfg, aid) = requireParams("load interstitial") ?: return
 
     runOnMainThread {
       if (interstitialLoader == null) {
-        createInterstitialLoader()
+        createInterstitialLoader(cfg, aid)
       }
 
       Log.d(TAG, "Calling interstitialLoader.loadAd()")
@@ -291,14 +282,14 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     destroyInterstitialLoader()
   }
 
-  private fun createInterstitialLoader() {
+  private fun createInterstitialLoader(configId: String, adUnitId: String) {
     Log.d(TAG, "Creating interstitial loader")
 
     try {
       interstitialLoader = MultiInterstitialAdLoader(
         context = reactContext.currentActivity ?: reactContext,
-        configId = configId!!,
-        gamAdUnitId = adUnitId!!
+        configId = configId,
+        gamAdUnitId = adUnitId
       )
 
       Log.d(TAG, "MultiInterstitialAdLoader created successfully")
@@ -348,16 +339,12 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
   fun loadRewarded() {
     Log.d(TAG, "loadRewarded called - configId=$configId, adUnitId=$adUnitId")
-    if (configId == null || adUnitId == null) {
-      Log.e(TAG, "Cannot load rewarded: configId or adUnitId is null")
-      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
-      return
-    }
+    val (cfg, aid) = requireParams("load rewarded") ?: return
 
     runOnMainThread {
       if (rewardedAdUnit == null) {
         Log.d(TAG, "Rewarded ad unit is null, creating new one")
-        createRewardedAdUnit()
+        createRewardedAdUnit(cfg, aid)
       }
 
       Log.d(TAG, "Calling rewardedAdUnit.loadAd()")
@@ -375,7 +362,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
-  private fun createRewardedAdUnit() {
+  private fun createRewardedAdUnit(configId: String, adUnitId: String) {
     Log.d(TAG, "Creating rewarded ad unit - configId: $configId, adUnitId: $adUnitId")
 
     try {
@@ -386,8 +373,8 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
         return
       }
 
-      val eventHandler = GamRewardedEventHandler(activity, adUnitId!!)
-      rewardedAdUnit = RewardedAdUnit(reactContext, configId!!, eventHandler)
+      val eventHandler = GamRewardedEventHandler(activity, adUnitId)
+      rewardedAdUnit = RewardedAdUnit(reactContext, configId, eventHandler)
 
       Log.d(TAG, "RewardedAdUnit created successfully")
 
@@ -476,10 +463,28 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     }
   }
 
+  // Validates that configId and adUnitId are set before starting an ad operation.
+  // Returns the validated (configId, adUnitId) pair so callers can use the values
+  // without `!!`. If either is null, logs the failure, emits onAdFailed, and returns null.
+  private fun requireParams(operation: String): Pair<String, String>? {
+    val cfg = configId
+    val aid = adUnitId
+    if (cfg == null || aid == null) {
+      Log.e(TAG, "Cannot $operation: configId or adUnitId is null")
+      sendEvent("onAdFailed", "Config ID or Ad Unit ID is null")
+      return null
+    }
+    return cfg to aid
+  }
+
   // Detect which SDK actually rendered the rewarded ad.
   // The Prebid rewarded path has no MultiRewardedAdLoader (unlike banner/interstitial),
   // so we approximate from the auction's winning bid: if Prebid had a winner, treat as
   // Prebid render; otherwise GAM mediation rendered it.
+  // WARNING: this approximation depends on internals of the Prebid SDK (the meaning
+  // of `bidResponse.winningBid` and which SDK actually renders after auction) and may
+  // break or become inaccurate with future Prebid SDK updates — re-check on each
+  // SDK version bump.
   private fun rewardedSdkType(unit: RewardedAdUnit?): SdkType {
     return if (unit?.bidResponse?.winningBid != null) SdkType.PREBID else SdkType.GAM
   }

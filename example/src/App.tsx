@@ -43,9 +43,9 @@ export default function App() {
         console.log('Initializing Veon Prebid SDK...');
 
         await VeonPrebidSDK.getInstance().initialize({
-          prebidHost: 'https://prebid-server-test-j.prebid.org/openrtb2/auction',
+          prebidHost: 'https://prebid.veonadx.com/openrtb2/auction',
           configHost: 'https://dcdn.veonadx.com/sdk/uz.beeline.odp/config.json',
-          accountId: '0689a263-318d-448b-a3d4-b02e8a709d9d', // Replace with your account ID
+          accountId: 'uz.beeline.odp', // Replace with your account ID
           timeoutMillis: 3000,
           pbsDebug: __DEV__,
         });
@@ -203,7 +203,7 @@ export default function App() {
                   ref={bannerAdRef}
                   adType={AdType.BANNER}
                   configId="beeline_uz_android_manual_veon_test_320x50" // Replace with your config ID
-                  adUnitId="ca-app-pub-3940256099942544/9214589741 ҳжк" // Replace with your ad unit ID
+                  adUnitId="ca-app-pub-3940256099942544/9214589741" // Replace with your ad unit ID
                   width={320}
                   height={50}
                   refreshInterval={30}
@@ -232,7 +232,7 @@ export default function App() {
                 ref={interstitialAdRef}
                 adType={AdType.INTERSTITIAL}
                 configId="beeline_uz_android_universal_interstitial" // Replace with your config ID
-                adUnitId="ca-app-pub-3940256099942544/1033173712 dfas" // Replace with your ad unit ID
+                adUnitId="ca-app-pub-3940256099942544/1033173712" // Replace with your ad unit ID
                 onAdLoaded={handleInterstitialLoaded}
                 onAdFailed={handleInterstitialFailed}
                 onAdClosed={handleInterstitialClosed}
@@ -253,7 +253,7 @@ export default function App() {
                 ref={rewardedAdRef}
                 adType={AdType.REWARD_VIDEO}
                 configId="prebid-demo-video-rewarded-endcard-time-close-button" // Replace with your config ID
-                adUnitId="ca-app-pub-3940256099942544/5224354917 dfg" // Replace with your ad unit ID
+                adUnitId="ca-app-pub-3940256099942544/5224354917" // Replace with your ad unit ID
                 onAdLoaded={handleRewardedLoaded}
                 onAdFailed={handleRewardedFailed}
                 onAdClosed={handleRewardedClosed}

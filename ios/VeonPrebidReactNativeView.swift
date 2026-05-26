@@ -179,7 +179,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc func loadBanner() {
         guard let configId = adParameters.configId,
               let adUnitId = adParameters.adUnitId else {
-            NSLog("VeonPrebid iOS: Cannot load banner - missing configId or adUnitId")
+            emitFailure("Missing configId or adUnitId")
             return
         }
 
@@ -210,7 +210,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc func loadInterstitial() {
         guard let configId = adParameters.configId,
               let adUnitId = adParameters.adUnitId else {
-            NSLog("VeonPrebid iOS: Cannot load interstitial - missing parameters")
+            emitFailure("Missing configId or adUnitId")
             return
         }
 
@@ -222,7 +222,7 @@ class VeonPrebidReactNativeView: UIView {
         NSLog("VeonPrebid iOS: Showing interstitial")
 
         guard let prebidInterstitial = prebidInterstitial else {
-            NSLog("VeonPrebid iOS: No interstitial loaded yet")
+            emitFailure("No interstitial loaded yet")
             return
         }
         let rootViewController = getRootViewController()
@@ -239,7 +239,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc func loadRewarded() {
         guard let configId = adParameters.configId,
               let adUnitId = adParameters.adUnitId else {
-            NSLog("VeonPrebid iOS: Cannot load rewarded - missing parameters")
+            emitFailure("Missing configId or adUnitId")
             return
         }
 
@@ -251,7 +251,7 @@ class VeonPrebidReactNativeView: UIView {
         NSLog("VeonPrebid iOS: Showing rewarded")
 
         guard let rewardedAdUnit = rewardedAdUnit, rewardedAdUnit.isReady else {
-            NSLog("VeonPrebid iOS: No rewarded loaded yet or not ready")
+            emitFailure("No rewarded loaded yet or not ready")
             return
         }
         let rootViewController = getRootViewController()
@@ -361,6 +361,18 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     // MARK: - Utility Methods
+
+    /// Emits onAdFailed to JS with a developer-supplied error message, so JS callers
+    /// see a feedback event for validation/state failures (missing params, no ad ready, etc.)
+    /// instead of a silent no-op.
+    private func emitFailure(_ message: String) {
+        NSLog("VeonPrebid iOS: \(message)")
+        onAdFailed?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "error": message
+        ])
+    }
 
     func getRootViewController() -> UIViewController {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
