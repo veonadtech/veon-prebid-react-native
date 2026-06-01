@@ -18,6 +18,17 @@ export interface AdEventPayload {
 }
 
 /**
+ * Event payload for rewarded ad reward earned event
+ */
+export interface RewardEventPayload {
+  configId?: string;
+  adUnitId?: string;
+  sdkType?: string;
+  rewardType?: string;
+  rewardAmount?: Int32;
+}
+
+/**
  * Native Props for VeonPrebidReactNativeView
  */
 export interface NativeProps extends ViewProps {
@@ -45,6 +56,7 @@ export interface NativeProps extends ViewProps {
   onAdFailed?: DirectEventHandler<AdEventPayload>;
   onAdClicked?: DirectEventHandler<AdEventPayload>;
   onAdClosed?: DirectEventHandler<AdEventPayload>;
+  onAdRewardEarned?: DirectEventHandler<RewardEventPayload>;
 }
 
 type ComponentType = HostComponent<NativeProps>;
@@ -59,6 +71,8 @@ export interface NativeCommands {
   pauseAuction: (viewRef: React.ElementRef<ComponentType>) => void;
   resumeAuction: (viewRef: React.ElementRef<ComponentType>) => void;
   destroyAuction: (viewRef: React.ElementRef<ComponentType>) => void;
+  loadRewarded: (viewRef: React.ElementRef<ComponentType>) => void;
+  showRewarded: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
@@ -72,6 +86,8 @@ export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
     'pauseAuction',
     'resumeAuction',
     'destroyAuction',
+    'loadRewarded',
+    'showRewarded',
   ],
 });
 

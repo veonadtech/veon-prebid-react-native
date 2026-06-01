@@ -6,6 +6,7 @@ export { AdType } from './types';
 export type {
   VeonPrebidViewProps,
   AdEventData,
+  RewardData,
   AdController,
   VeonPrebidAdProps,
   PrebidConfig

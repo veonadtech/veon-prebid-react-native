@@ -114,6 +114,11 @@ extension VeonPrebidReactNativeView: PrebidMobile.BannerViewDelegate {
 }
 
 // MARK: - RewardedAdUnitDelegate
+// NOTE: iOS PrebidMobile's RewardedAdUnit does not publicly expose which SDK rendered the ad
+// (lastBidResponse is internal-only and the delegate callbacks carry no SdkType parameter,
+// unlike Multi*Loader for banner/interstitial). All rewarded events therefore report
+// sdkType: "prebid" as a best-effort default. Android, where bidResponse.winningBid is public,
+// distinguishes "prebid" vs "gam" accurately.
 
 extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
 
@@ -124,10 +129,6 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
             "adUnitId": adParameters.adUnitId ?? "",
             "sdkType": "prebid"
         ])
-
-        if rewardedAd.isReady {
-            rewardedAd.show(from: getRootViewController())
-        }
     }
 
     func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
@@ -145,6 +146,13 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
         let rewardType = reward.type ?? ""
         let rewardCount = reward.count ?? 0
         NSLog("VeonPrebid iOS: User earned reward - type: \(rewardType), count: \(rewardCount)")
+        onAdRewardEarned?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "sdkType": "prebid",
+            "rewardType": rewardType,
+            "rewardAmount": rewardCount
+        ])
     }
 
     func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit) {

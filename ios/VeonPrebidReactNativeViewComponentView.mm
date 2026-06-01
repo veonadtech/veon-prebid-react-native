@@ -99,6 +99,10 @@ using namespace facebook::react;
         [_view performSelector:@selector(resumeAuction)];
     } else if ([commandName isEqualToString:@"destroyAuction"]) {
         [_view performSelector:@selector(destroyAuction)];
+    } else if ([commandName isEqualToString:@"loadRewarded"]) {
+        [_view performSelector:@selector(loadRewarded)];
+    } else if ([commandName isEqualToString:@"showRewarded"]) {
+        [_view performSelector:@selector(showRewarded)];
     } else {
         [super handleCommand:commandName args:args];
     }
@@ -184,6 +188,21 @@ using namespace facebook::react;
         }
     };
     [_view setValue:[onAdClosed copy] forKey:@"onAdClosed"];
+
+    void (^onAdRewardEarned)(NSDictionary *) = ^(NSDictionary *event) {
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf && strongSelf->_eventEmitter) {
+            auto emitter = std::static_pointer_cast<const VeonPrebidReactNativeViewEventEmitter>(strongSelf->_eventEmitter);
+            VeonPrebidReactNativeViewEventEmitter::OnAdRewardEarned data;
+            if (event[@"configId"]) data.configId = std::string([event[@"configId"] UTF8String]);
+            if (event[@"adUnitId"]) data.adUnitId = std::string([event[@"adUnitId"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
+            if (event[@"rewardType"]) data.rewardType = std::string([event[@"rewardType"] UTF8String]);
+            if (event[@"rewardAmount"]) data.rewardAmount = [event[@"rewardAmount"] intValue];
+            emitter->onAdRewardEarned(data);
+        }
+    };
+    [_view setValue:[onAdRewardEarned copy] forKey:@"onAdRewardEarned"];
 }
 
 Class<RCTComponentViewProtocol> VeonPrebidReactNativeViewCls(void)

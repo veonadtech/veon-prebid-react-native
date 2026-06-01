@@ -115,6 +115,14 @@ class VeonPrebidReactNativeViewManager(
         UiThreadUtil.runOnUiThread { view.hideInterstitial() }
     }
 
+    override fun loadRewarded(view: VeonPrebidReactNativeView) {
+        UiThreadUtil.runOnUiThread { view.loadRewarded() }
+    }
+
+    override fun showRewarded(view: VeonPrebidReactNativeView) {
+        UiThreadUtil.runOnUiThread { view.showRewarded() }
+    }
+
     override fun pauseAuction(view: VeonPrebidReactNativeView) {
         UiThreadUtil.runOnUiThread { view.pauseAuction() }
     }
@@ -148,6 +156,8 @@ class VeonPrebidReactNativeViewManager(
                 COMMAND_PAUSE_AUCTION -> view.pauseAuction()
                 COMMAND_RESUME_AUCTION -> view.resumeAuction()
                 COMMAND_DESTROY_AUCTION -> view.destroyAuction()
+                COMMAND_LOAD_REWARDED -> view.loadRewarded()
+                COMMAND_SHOW_REWARDED -> view.showRewarded()
                 else -> Log.w(TAG, "Unknown command: $commandId")
             }
         }
@@ -162,7 +172,8 @@ class VeonPrebidReactNativeViewManager(
             "onAdDisplayed" to mapOf("registrationName" to "onAdDisplayed"),
             "onAdFailed" to mapOf("registrationName" to "onAdFailed"),
             "onAdClicked" to mapOf("registrationName" to "onAdClicked"),
-            "onAdClosed" to mapOf("registrationName" to "onAdClosed")
+            "onAdClosed" to mapOf("registrationName" to "onAdClosed"),
+            "onAdRewardEarned" to mapOf("registrationName" to "onAdRewardEarned")
         )
     }
 
@@ -188,5 +199,7 @@ class VeonPrebidReactNativeViewManager(
         private const val COMMAND_PAUSE_AUCTION = 6
         private const val COMMAND_RESUME_AUCTION = 7
         private const val COMMAND_DESTROY_AUCTION = 8
+        private const val COMMAND_LOAD_REWARDED = 9
+        private const val COMMAND_SHOW_REWARDED = 10
     }
 }
