@@ -4,7 +4,7 @@ export const AdType = {
   REWARD_VIDEO: 'rewardvideo' as const,
 };
 
-export type AdType = typeof AdType[keyof typeof AdType];
+export type AdType = (typeof AdType)[keyof typeof AdType];
 
 export interface VeonPrebidViewProps {
   adType: AdType;
@@ -14,11 +14,21 @@ export interface VeonPrebidViewProps {
   height?: number;
   refreshInterval?: number;
   style?: any;
-  onAdLoaded?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
-  onAdDisplayed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
-  onAdFailed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
-  onAdClicked?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
-  onAdClosed?: (event: { nativeEvent: { adId?: string; sdk?: string; message?: string } }) => void;
+  onAdLoaded?: (event: {
+    nativeEvent: { adId?: string; sdk?: string; message?: string };
+  }) => void;
+  onAdDisplayed?: (event: {
+    nativeEvent: { adId?: string; sdk?: string; message?: string };
+  }) => void;
+  onAdFailed?: (event: {
+    nativeEvent: { adId?: string; sdk?: string; message?: string };
+  }) => void;
+  onAdClicked?: (event: {
+    nativeEvent: { adId?: string; sdk?: string; message?: string };
+  }) => void;
+  onAdClosed?: (event: {
+    nativeEvent: { adId?: string; sdk?: string; message?: string };
+  }) => void;
   onAdRewardEarned?: (event: { nativeEvent: RewardData }) => void;
 }
 

@@ -40,7 +40,10 @@ import type { AdController, VeonPrebidAdProps } from './types';
  * ```
  */
 export function useVeonPrebidAd(
-  config: Pick<VeonPrebidAdProps, 'adType' | 'configId' | 'adUnitId' | 'width' | 'height' | 'refreshInterval'>
+  config: Pick<
+    VeonPrebidAdProps,
+    'adType' | 'configId' | 'adUnitId' | 'width' | 'height' | 'refreshInterval'
+  >
 ) {
   const adRef = useRef<AdController>(null);
 

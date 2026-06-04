@@ -1,9 +1,5 @@
 import { useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import VeonPrebidReactNativeView, {
   Commands,
 } from './VeonPrebidReactNativeViewNativeComponent';
