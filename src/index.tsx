@@ -9,5 +9,5 @@ export type {
   RewardData,
   AdController,
   VeonPrebidAdProps,
-  PrebidConfig
+  PrebidConfig,
 } from './types';
