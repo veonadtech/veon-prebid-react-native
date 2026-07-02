@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 0.6.0
+### Changed
+* **Android: migrated to the Google Next-Gen Mobile Ads SDK (GMA)** for the banner and interstitial GAM waterfall fallback, and bumped the Veon Prebid SDK 0.3.2 → 0.4.2:
+  * Banner: `MultiBannerLoader` → `MultiBannerLoaderNextGenGam`; interstitial: `MultiInterstitialAdLoader` → `MultiInterstitialAdLoaderNextGenGam` (`org.prebid.mobile.api.multiloadernextgen`)
+  * Multi-loader listeners moved package: `api.multiadloader.listeners` → `api.multiloadercommon` (interfaces unchanged)
+  * Rewarded GAM fallback handler: `GamRewardedEventHandler` → `NextGenRewardedEventHandler` — the Prebid header-bidding path (`RewardedAdUnit`, winning-bid detection) is untouched; only the ad-server event handler swapped, forced because the two GMA SDKs cannot coexist
+  * SDK init now initializes the Next-Gen GMA SDK (`MobileAds.initialize` with `InitializationConfig`) on a background thread, reading the AdMob application id from the host app's manifest `com.google.android.gms.ads.APPLICATION_ID` meta-data; dropped the legacy `checkGoogleMobileAdsCompatibility` call
+* Android dependencies: replaced `play-services-ads` with the Next-Gen `ads-mobile-sdk:0.25.0-beta01`, `eventhandlers` → `eventhandlers.nextgen`, and excluded `play-services-ads-api` (its base `com.google.android.gms.ads.*` classes duplicate those bundled in the Next-Gen SDK, which would otherwise fail the build)
+* Android `minSdkVersion` raised 21 → 24 (required by the Next-Gen GMA SDK)
+
 ## 0.5.0
 ### Added
 * **Rewarded video ad format** — full support across JS, iOS, and Android (was missing from the React Native port, only iOS had partial scaffolding):
