@@ -13,22 +13,22 @@ import com.facebook.react.uimanager.events.RCTEventEmitter
 import org.prebid.mobile.AdSize
 import org.prebid.mobile.api.data.SdkType
 import org.prebid.mobile.api.exceptions.AdException
-import org.prebid.mobile.api.multiadloader.MultiBannerLoader
-import org.prebid.mobile.api.multiadloader.MultiInterstitialAdLoader
-import org.prebid.mobile.api.multiadloader.listeners.MultiBannerViewListener
-import org.prebid.mobile.api.multiadloader.listeners.MultiInterstitialAdListener
+import org.prebid.mobile.api.multiloadercommon.MultiBannerViewListener
+import org.prebid.mobile.api.multiloadercommon.MultiInterstitialAdListener
+import org.prebid.mobile.api.multiloadernextgen.MultiBannerLoaderNextGenGam
+import org.prebid.mobile.api.multiloadernextgen.MultiInterstitialAdLoaderNextGenGam
 import org.prebid.mobile.api.rendering.BannerView
 import org.prebid.mobile.api.rendering.RewardedAdUnit
 import org.prebid.mobile.api.rendering.listeners.RewardedAdUnitListener
-import org.prebid.mobile.eventhandlers.GamRewardedEventHandler
+import org.prebid.mobile.eventhandlers.nextgen.NextGenRewardedEventHandler
 import org.prebid.mobile.rendering.interstitial.rewarded.Reward
 
 class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameLayout(reactContext) {
   private val TAG = "VeonPrebidRN"
 
   // Ad loaders
-  private var bannerLoader: MultiBannerLoader? = null
-  private var interstitialLoader: MultiInterstitialAdLoader? = null
+  private var bannerLoader: MultiBannerLoaderNextGenGam? = null
+  private var interstitialLoader: MultiInterstitialAdLoaderNextGenGam? = null
   private var rewardedAdUnit: RewardedAdUnit? = null
 
   // Ad parameters - stored individually for compatibility with ViewManager
@@ -189,7 +189,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     Log.d(TAG, "Creating banner loader - size: ${width}x${height}, configId: $configId, adUnitId: $adUnitId, refresh: $refreshInterval")
 
     try {
-      bannerLoader = MultiBannerLoader(
+      bannerLoader = MultiBannerLoaderNextGenGam(
         context = context,
         adSize = AdSize(width, height),
         configId = configId,
@@ -197,7 +197,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
         autoRefreshDelay = refreshInterval
       )
 
-      Log.d(TAG, "MultiBannerLoader created successfully")
+      Log.d(TAG, "MultiBannerLoaderNextGenGam created successfully")
 
       bannerLoader?.setListener(object : MultiBannerViewListener {
         override fun onAdLoaded(view: View, sdk: SdkType) {
@@ -286,13 +286,13 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     Log.d(TAG, "Creating interstitial loader")
 
     try {
-      interstitialLoader = MultiInterstitialAdLoader(
+      interstitialLoader = MultiInterstitialAdLoaderNextGenGam(
         context = reactContext.currentActivity ?: reactContext,
         configId = configId,
         gamAdUnitId = adUnitId
       )
 
-      Log.d(TAG, "MultiInterstitialAdLoader created successfully")
+      Log.d(TAG, "MultiInterstitialAdLoaderNextGenGam created successfully")
 
       interstitialLoader?.setListener(object : MultiInterstitialAdListener {
         override fun onAdLoaded(sdk: SdkType) {
@@ -373,7 +373,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
         return
       }
 
-      val eventHandler = GamRewardedEventHandler(activity, adUnitId)
+      val eventHandler = NextGenRewardedEventHandler(activity, adUnitId)
       rewardedAdUnit = RewardedAdUnit(reactContext, configId, eventHandler)
 
       Log.d(TAG, "RewardedAdUnit created successfully")
