@@ -3,8 +3,8 @@ import type {
   Int32,
   DirectEventHandler,
 } from 'react-native/Libraries/Types/CodegenTypes';
-import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
-import codegenNativeCommands from 'react-native/Libraries/Utilities/codegenNativeCommands';
+import { codegenNativeComponent } from 'react-native';
+import { codegenNativeCommands } from 'react-native';
 
 /**
  * Event payload for ad events
