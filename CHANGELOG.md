@@ -9,6 +9,8 @@
   * SDK init now initializes the Next-Gen GMA SDK (`MobileAds.initialize` with `InitializationConfig`) on a background thread, reading the AdMob application id from the host app's manifest `com.google.android.gms.ads.APPLICATION_ID` meta-data; dropped the legacy `checkGoogleMobileAdsCompatibility` call
 * Android dependencies: replaced `play-services-ads` with the Next-Gen `ads-mobile-sdk:0.25.0-beta01`, `eventhandlers` → `eventhandlers.nextgen`, and excluded `play-services-ads-api` (its base `com.google.android.gms.ads.*` classes duplicate those bundled in the Next-Gen SDK, which would otherwise fail the build)
 * Android `minSdkVersion` raised 21 → 24 (required by the Next-Gen GMA SDK)
+* Interstitial container size is now derived from the bid response (`bid.w`/`bid.h`) instead of
+* always filling the screen, capped so it never exceeds the display's size
 
 ## 0.5.0
 ### Added

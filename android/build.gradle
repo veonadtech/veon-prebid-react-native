@@ -98,10 +98,10 @@ dependencies {
   implementation 'com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:0.25.0-beta01'
 
   // Veon Prebid SDK (Next-Gen)
-  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.4.2'
-  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers.nextgen:0.4.2'
-  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.4.2'
-  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.4.2'
+  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.4.3'
+  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers.nextgen:0.4.3'
+  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.4.3'
+  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.4.3'
 
   // Test dependencies
   testImplementation 'junit:junit:4.13.2'
