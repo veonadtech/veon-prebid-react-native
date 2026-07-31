@@ -14,3 +14,6 @@ gem 'bigdecimal'
 gem 'logger'
 gem 'benchmark'
 gem 'mutex_m'
+# nkf provides `kconv`, which CocoaPods 1.15.x requires at `pod install` time;
+# it was dropped from Ruby 3.4's default gems (macos-latest runner uses Ruby 3.4).
+gem 'nkf'

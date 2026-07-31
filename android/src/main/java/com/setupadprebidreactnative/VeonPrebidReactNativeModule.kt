@@ -1,12 +1,14 @@
 package com.setupadprebidreactnative
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
-import com.google.android.gms.ads.MobileAds
+import com.google.android.libraries.ads.mobile.sdk.MobileAds
+import com.google.android.libraries.ads.mobile.sdk.initialization.InitializationConfig
 import org.prebid.mobile.PrebidMobile
 import org.prebid.mobile.api.data.InitializationStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -103,7 +105,10 @@ class VeonPrebidReactNativeModule(private val reactContext: ReactApplicationCont
                 PrebidMobile.setPbsDebug(pbsDebug)
                 PrebidMobile.setTimeoutMillis(timeoutMillis)
                 PrebidMobile.setShareGeoLocation(true)
-                PrebidMobile.checkGoogleMobileAdsCompatibility(MobileAds.getVersion().toString())
+                // Initialize the Next-Gen GMA SDK so the GAM waterfall fallback can serve ads.
+                // Its AdMob app id is read from the host app's manifest; without it Prebid still
+                // works but the GAM fallback stays unavailable.
+                initNextGenMobileAds(context)
 
                 PrebidMobile.initializeSdk(context, prebidHost, configHost) { status ->
                     mainHandler.removeCallbacks(timeoutRunnable)
@@ -129,6 +134,44 @@ class VeonPrebidReactNativeModule(private val reactContext: ReactApplicationCont
                 mainHandler.removeCallbacks(timeoutRunnable)
                 settleFailure("INIT_ERROR", "Failed to initialize SDK: ${e.message}", e)
             }
+        }
+    }
+
+    /**
+     * Initialize the Google Next-Gen Mobile Ads SDK on a background thread (per Google's guidance).
+     * Backs the GAM waterfall fallback used by the banner/interstitial NextGen loaders and the
+     * rewarded NextGen event handler.
+     */
+    private fun initNextGenMobileAds(context: Context) {
+        val appId = readAdMobAppId(context)
+        if (appId.isNullOrBlank()) {
+            Log.w(TAG, "AdMob APPLICATION_ID missing from manifest; Next-Gen GAM fallback unavailable")
+            return
+        }
+        Thread {
+            try {
+                MobileAds.initialize(context, InitializationConfig.Builder(appId).build())
+                Log.d(TAG, "Next-Gen GMA SDK initialization requested")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error initializing Next-Gen GMA SDK: ${e.message}", e)
+            }
+        }.start()
+    }
+
+    /**
+     * Reads the AdMob application id (ca-app-pub-XXXX~YYYY) that the host app declares in its
+     * AndroidManifest as `com.google.android.gms.ads.APPLICATION_ID` meta-data.
+     */
+    private fun readAdMobAppId(context: Context): String? {
+        return try {
+            val appInfo = context.packageManager.getApplicationInfo(
+                context.packageName,
+                PackageManager.GET_META_DATA
+            )
+            appInfo.metaData?.getString("com.google.android.gms.ads.APPLICATION_ID")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to read AdMob APPLICATION_ID from manifest: ${e.message}", e)
+            null
         }
     }
 

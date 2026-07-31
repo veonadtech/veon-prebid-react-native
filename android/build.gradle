@@ -78,19 +78,30 @@ repositories {
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
 
+configurations.configureEach {
+  // Prebid core still pulls legacy play-services-ads transitively for its *LegacyGam loaders,
+  // which we don't use. Its base API stub (play-services-ads-api) duplicates the
+  // com.google.android.gms.ads.* classes already bundled in the Next-Gen ads-mobile-sdk,
+  // causing "Duplicate class" build failures. Drop the legacy stub — mirrors PrebidVeonNextGenDemo.
+  exclude group: 'com.google.android.gms', module: 'play-services-ads-api'
+}
+
 dependencies {
   // React Native
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
-  // Google Mobile Ads (AdManager)
-  implementation 'com.google.android.gms:play-services-ads:22.2.0'
+  // Google Mobile Ads — Next-Gen GMA SDK. Backs Prebid's NextGen multi-loaders
+  // (api/multiloadernextgen) and the NextGen GAM event handlers used for the waterfall fallback.
+  // Replaces the legacy play-services-ads: the two GMA SDKs cannot coexist (they both ship the
+  // base com.google.android.gms.ads.* classes).
+  implementation 'com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:0.25.0-beta01'
 
-  // Veon Prebid SDK
-  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.3.2'
-  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers:0.3.2'
-  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.3.2'
-  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.3.2'
+  // Veon Prebid SDK (Next-Gen)
+  implementation 'com.github.veonadtech.prebid-android-sdk:core:0.4.3'
+  implementation 'com.github.veonadtech.prebid-android-sdk:eventhandlers.nextgen:0.4.3'
+  implementation 'com.github.veonadtech.prebid-android-sdk:mobile:0.4.3'
+  implementation 'com.github.veonadtech.prebid-android-sdk:prebidorg:0.4.3'
 
   // Test dependencies
   testImplementation 'junit:junit:4.13.2'
