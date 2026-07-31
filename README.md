@@ -339,7 +339,7 @@ npm run android
 
 - React Native >= 0.70
 - iOS >= 11.0
-- Android minSdkVersion >= 21
+- Android minSdkVersion >= 24
 
 ## License
 
