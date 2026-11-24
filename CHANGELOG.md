@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.6.1
+## 0.6.2
 
 ### Changed
 * Android: upgraded Veon Prebid SDK to 0.5.5 and Kotlin to 2.3.0, which is required to read the SDK's Kotlin metadata.
