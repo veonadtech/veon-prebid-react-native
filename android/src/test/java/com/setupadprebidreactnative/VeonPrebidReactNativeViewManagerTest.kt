@@ -53,20 +53,25 @@ class VeonPrebidReactNativeViewManagerTest {
     }
 
     @Test
-    fun `getExportedCustomDirectEventTypeConstants exports all 5 events`() {
+    fun `getExportedCustomDirectEventTypeConstants exports all 7 events`() {
         val events = manager.exportedCustomDirectEventTypeConstants!!
-        assertEquals(5, events.size)
+        assertEquals(7, events.size)
         assertTrue(events.containsKey("onAdLoaded"))
+        assertTrue(events.containsKey("onDemandResult"))
         assertTrue(events.containsKey("onAdDisplayed"))
         assertTrue(events.containsKey("onAdFailed"))
         assertTrue(events.containsKey("onAdClicked"))
         assertTrue(events.containsKey("onAdClosed"))
+        assertTrue(events.containsKey("onAdRewardEarned"))
     }
 
     @Test
     fun `event registrations use correct registrationName`() {
         val events = manager.exportedCustomDirectEventTypeConstants!!
-        val eventNames = listOf("onAdLoaded", "onAdDisplayed", "onAdFailed", "onAdClicked", "onAdClosed")
+        val eventNames = listOf(
+            "onAdLoaded", "onDemandResult", "onAdDisplayed", "onAdFailed",
+            "onAdClicked", "onAdClosed", "onAdRewardEarned"
+        )
         for (name in eventNames) {
             @Suppress("UNCHECKED_CAST")
             val entry = events[name] as Map<String, Any>

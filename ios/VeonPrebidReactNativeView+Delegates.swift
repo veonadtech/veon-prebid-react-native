@@ -7,22 +7,24 @@ import PrebidMobile
 extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
 
     func interstitialDidReceiveAd(_ interstitial: InterstitialRenderingAdUnit) {
-        NSLog("VeonPrebid iOS: Interstitial ad loaded")
+        let source = interstitialSource ?? "prebid"
+        NSLog("VeonPrebid iOS: Interstitial ad loaded from \(source)")
         onAdLoaded?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": source
         ])
     }
 
     func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error: Error?) {
+        if interstitialPrebidUnavailable && interstitialGamFailed { return }
         let errorMsg = error?.localizedDescription ?? "Unknown error"
         NSLog("VeonPrebid iOS: Interstitial failed to load - \(errorMsg)")
         onAdFailed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
             "error": errorMsg,
-            "sdkType": "prebid"
+            "sdkType": interstitialSource ?? "prebid"
         ])
     }
 
@@ -31,7 +33,7 @@ extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
         onAdClicked?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": interstitialSource ?? "prebid"
         ])
     }
 
@@ -40,7 +42,7 @@ extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
         onAdClicked?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": interstitialSource ?? "prebid"
         ])
     }
 
@@ -49,7 +51,7 @@ extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
         onAdClosed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": interstitialSource ?? "prebid"
         ])
     }
 
@@ -58,7 +60,7 @@ extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
         onAdDisplayed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": interstitialSource ?? "prebid"
         ])
     }
 }
@@ -114,31 +116,30 @@ extension VeonPrebidReactNativeView: PrebidMobile.BannerViewDelegate {
 }
 
 // MARK: - RewardedAdUnitDelegate
-// NOTE: iOS PrebidMobile's RewardedAdUnit does not publicly expose which SDK rendered the ad
-// (lastBidResponse is internal-only and the delegate callbacks carry no SdkType parameter,
-// unlike Multi*Loader for banner/interstitial). All rewarded events therefore report
-// sdkType: "prebid" as a best-effort default. Android, where bidResponse.winningBid is public,
-// distinguishes "prebid" vs "gam" accurately.
+// The event handler records the winner before these RewardedAdUnit callbacks run.
 
 extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
 
     func rewardedAdDidReceiveAd(_ rewardedAd: RewardedAdUnit) {
-        NSLog("VeonPrebid iOS: Rewarded ad received")
+        let source = rewardedSource ?? "unknown"
+        NSLog("VeonPrebid iOS: Rewarded ad received from \(source)")
         onAdLoaded?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": source
         ])
     }
 
     func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
+        // Both source failures were already emitted with their own SDK labels.
+        if rewardedPrebidUnavailable && rewardedGamFailed { return }
         let errorMsg = error?.localizedDescription ?? "Unknown error"
         NSLog("VeonPrebid iOS: Rewarded ad failed to load - \(errorMsg)")
         onAdFailed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
             "error": errorMsg,
-            "sdkType": "prebid"
+            "sdkType": rewardedSource ?? "prebid"
         ])
     }
 
@@ -149,7 +150,7 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
         onAdRewardEarned?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid",
+            "sdkType": rewardedSource ?? "unknown",
             "rewardType": rewardType,
             "rewardAmount": rewardCount
         ])
@@ -160,7 +161,7 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
         onAdDisplayed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": rewardedSource ?? "unknown"
         ])
     }
 
@@ -169,7 +170,7 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
         onAdClosed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": rewardedSource ?? "unknown"
         ])
     }
 
@@ -178,7 +179,7 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
         onAdClicked?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": rewardedSource ?? "unknown"
         ])
     }
 
@@ -187,7 +188,7 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
         onAdClicked?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": rewardedSource ?? "unknown"
         ])
     }
 }

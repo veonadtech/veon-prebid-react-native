@@ -1,4 +1,7 @@
 import XCTest
+import React
+import PrebidMobile
+import VeonPrebidMobileGAMEventHandlers
 @testable import VeonPrebidReactNative
 
 /// Tests that the native view correctly receives and stores props set via KVC,
@@ -120,6 +123,11 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         XCTAssertTrue(view.responds(to: #selector(VeonPrebidReactNativeView.hideInterstitial)))
     }
 
+    func testRespondsToLoadAndShowRewarded() {
+        XCTAssertTrue(view.responds(to: #selector(VeonPrebidReactNativeView.loadRewarded)))
+        XCTAssertTrue(view.responds(to: #selector(VeonPrebidReactNativeView.showRewarded)))
+    }
+
     func testRespondsToPauseAuction() {
         XCTAssertTrue(view.responds(to: #selector(VeonPrebidReactNativeView.pauseAuction)))
     }
@@ -178,10 +186,12 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
 
         // Should not crash — these are the exact keys Fabric ComponentView uses
         view.setValue(block, forKey: "onAdLoaded")
+        view.setValue(block, forKey: "onDemandResult")
         view.setValue(block, forKey: "onAdDisplayed")
         view.setValue(block, forKey: "onAdFailed")
         view.setValue(block, forKey: "onAdClicked")
         view.setValue(block, forKey: "onAdClosed")
+        view.setValue(block, forKey: "onAdRewardEarned")
     }
 
     // MARK: - Event callback wiring
@@ -196,6 +206,47 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         // Invoke directly to verify wiring
         view.onAdFailed?([:])
         XCTAssertTrue(callbackFired)
+    }
+
+    func testRewardedDelegateReportsSelectedPrebidSource() {
+        view.adParameters.configId = "reward-config"
+        view.adParameters.adUnitId = "/network/rewarded"
+        view.rewardedSource = "prebid"
+
+        var loadedSource: String?
+        view.onAdLoaded = { event in
+            loadedSource = event?["sdkType"] as? String
+        }
+        let handler = GAMRewardedAdEventHandler(adUnitID: "/network/rewarded")
+        let adUnit = RewardedAdUnit(configID: "reward-config", eventHandler: handler)
+
+        view.rewardedAdDidReceiveAd(adUnit)
+
+        XCTAssertEqual(loadedSource, "prebid")
+    }
+
+    func testRewardedDelegateEmitsRewardPayloadWithGamSource() {
+        view.adParameters.configId = "reward-config"
+        view.adParameters.adUnitId = "/network/rewarded"
+        view.rewardedSource = "gam"
+
+        var events: [[AnyHashable: Any]] = []
+        view.onAdRewardEarned = { event in
+            if let event { events.append(event) }
+        }
+        let handler = GAMRewardedAdEventHandler(adUnitID: "/network/rewarded")
+        let adUnit = RewardedAdUnit(configID: "reward-config", eventHandler: handler)
+
+        XCTAssertTrue(events.isEmpty)
+        let reward = PrebidReward()
+        reward.type = "coins"
+        reward.count = 5
+        view.rewardedAdUserDidEarnReward(adUnit, reward: reward)
+
+        XCTAssertEqual(events.count, 1)
+        XCTAssertEqual(events.first?["sdkType"] as? String, "gam")
+        XCTAssertEqual(events.first?["rewardType"] as? String, "coins")
+        XCTAssertEqual(events.first?["rewardAmount"] as? Int, 5)
     }
 
     // MARK: - DestroyAuction cleanup
