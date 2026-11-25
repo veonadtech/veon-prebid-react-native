@@ -37,8 +37,14 @@ yarn add setupad-prebid-react-native
 cd ios && pod install
 ```
 
-The adapter's podspec installs `VeonPrebidMobile` and
-`VeonPrebidMobileGAMEventHandlers` 0.5.3 and `Google-Mobile-Ads-SDK` 13.6.0.
+The adapter's podspec installs `VeonPrebidMobile`,
+`VeonPrebidMobileGAMEventHandlers`, `VeonPrebidMultiAdLoader`,
+`VeonPrebidMultiAdLoaderGAM`, and `VeonPrebidRemoteConfig` 0.5.3, plus
+`Google-Mobile-Ads-SDK` 13.6.0. On iOS, banner and interstitial ads use
+the Multi Ad Loader to request Prebid and GAM independently; rewarded ads use
+the existing Prebid/GAM integration. `configHost` supplies the iOS remote
+configuration URL for the loader's source priority. The SDK fetches it in the
+background; until it arrives, the loader uses its default priority.
 Do not add these pods separately to your Podfile. If your app uses
 `use_frameworks!`, use static linkage (`use_frameworks! :linkage => :static`).
 

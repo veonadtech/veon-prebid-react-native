@@ -5,6 +5,7 @@
 ### Changed
 * Android: upgraded Veon Prebid SDK to 0.5.5 and Kotlin to 2.3.0, which is required to read the SDK's Kotlin metadata.
 * iOS: upgraded `VeonPrebidMobile` and `VeonPrebidMobileGAMEventHandlers` to 0.5.3 and `Google-Mobile-Ads-SDK` to 13.6.0. The example continues to install them through CocoaPods.
+* iOS: banner and interstitial now use the 0.5.3 Multi Ad Loaders for independent Prebid and GAM requests. The `configHost` URL is passed to the iOS remote configuration module for source priority.
 * Updated the example's CocoaPods version and added an Xcode 26 workaround for React Native's `fmt` pod.
 
 ### Added

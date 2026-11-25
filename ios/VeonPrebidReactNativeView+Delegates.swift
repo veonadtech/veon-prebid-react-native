@@ -1,116 +1,145 @@
 import UIKit
-import GoogleMobileAds
 import PrebidMobile
+import VeonPrebidMultiAdLoader
+import VeonPrebidRemoteConfig
 
-// MARK: - InterstitialAdUnitDelegate
+// MARK: - Multi Ad Loader delegates
 
-extension VeonPrebidReactNativeView: InterstitialAdUnitDelegate {
+extension VeonPrebidReactNativeView: VeonMultiBannerAdLoaderDelegate {
 
-    func interstitialDidReceiveAd(_ interstitial: InterstitialRenderingAdUnit) {
-        let source = interstitialSource ?? "prebid"
-        NSLog("VeonPrebid iOS: Interstitial ad loaded from \(source)")
+    func bannerLoader(_ loader: VeonMultiBannerAdLoader, didLoad view: UIView, from sdk: SdkType) {
+        guard bannerLoader === loader else { return }
+        let wasVisible = loadedBannerView?.superview != nil
+        loadedBannerView?.removeFromSuperview()
+        retiringBannerLoader?.delegate = nil
+        retiringBannerLoader?.destroy()
+        retiringBannerLoader = nil
+        loadedBannerView = view
+        if auctionPaused { (view as? PrebidMobile.BannerView)?.stopRefresh() }
+        if wasVisible { showBanner() }
+        NSLog("VeonPrebid iOS: Banner loaded from \(sdk.rawValue)")
         onAdLoaded?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": source
+            "sdkType": sdk.rawValue.lowercased()
         ])
     }
 
-    func interstitial(_ interstitial: InterstitialRenderingAdUnit, didFailToReceiveAdWithError error: Error?) {
-        if interstitialPrebidUnavailable && interstitialGamFailed { return }
-        let errorMsg = error?.localizedDescription ?? "Unknown error"
-        NSLog("VeonPrebid iOS: Interstitial failed to load - \(errorMsg)")
+    func bannerLoader(_ loader: VeonMultiBannerAdLoader, didFailToLoad sdk: SdkType, error: Error?) {
+        guard bannerLoader === loader else { return }
+        let message = error?.localizedDescription ?? "Unknown error"
+        NSLog("VeonPrebid iOS: Banner failed from \(sdk.rawValue): \(message)")
         onAdFailed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "error": errorMsg,
-            "sdkType": interstitialSource ?? "prebid"
+            "error": message,
+            "sdkType": sdk.rawValue.lowercased()
         ])
     }
 
-    func interstitialWillLeaveApplication(_ interstitial: InterstitialRenderingAdUnit) {
-        NSLog("VeonPrebid iOS: Interstitial will leave application")
-        onAdClicked?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": interstitialSource ?? "prebid"
-        ])
+    func bannerLoaderDidFailAll(_ loader: VeonMultiBannerAdLoader) {
+        guard bannerLoader === loader, let retiringBannerLoader else { return }
+        loader.delegate = nil
+        loader.destroy()
+        bannerLoader = retiringBannerLoader
+        self.retiringBannerLoader = nil
     }
 
-    func interstitialDidClickAd(_ interstitial: InterstitialRenderingAdUnit) {
-        NSLog("VeonPrebid iOS: Interstitial clicked")
-        onAdClicked?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": interstitialSource ?? "prebid"
-        ])
-    }
-
-    func interstitialDidCloseAd(_ interstitial: InterstitialRenderingAdUnit) {
-        NSLog("VeonPrebid iOS: Interstitial closed")
-        onAdClosed?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": interstitialSource ?? "prebid"
-        ])
-    }
-
-    func interstitialWillPresentAd(_ interstitial: InterstitialRenderingAdUnit) {
-        NSLog("VeonPrebid iOS: Interstitial displayed")
+    func bannerLoader(_ loader: VeonMultiBannerAdLoader, didRecordImpressionFrom sdk: SdkType) {
+        guard bannerLoader === loader else { return }
         onAdDisplayed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": interstitialSource ?? "prebid"
+            "sdkType": sdk.rawValue.lowercased()
+        ])
+    }
+
+    func bannerLoader(_ loader: VeonMultiBannerAdLoader, didRecordClickFrom sdk: SdkType) {
+        guard bannerLoader === loader else { return }
+        emitBannerClick(from: sdk)
+    }
+
+    func bannerLoader(_ loader: VeonMultiBannerAdLoader, willLeaveApplication sdk: SdkType) {
+        guard bannerLoader === loader else { return }
+        emitBannerClick(from: sdk)
+    }
+
+    func bannerLoader(_ loader: VeonMultiBannerAdLoader, didDismissScreenFrom sdk: SdkType) {
+        guard bannerLoader === loader else { return }
+        onAdClosed?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "sdkType": sdk.rawValue.lowercased()
+        ])
+    }
+
+    private func emitBannerClick(from sdk: SdkType) {
+        onAdClicked?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "sdkType": sdk.rawValue.lowercased()
         ])
     }
 }
 
-// MARK: - BannerViewDelegate
+extension VeonPrebidReactNativeView: VeonMultiInterstitialAdLoaderDelegate {
 
-extension VeonPrebidReactNativeView: PrebidMobile.BannerViewDelegate {
-
-    func bannerViewPresentationController() -> UIViewController? {
-        return getRootViewController()
-    }
-
-    func bannerView(_ bannerView: PrebidMobile.BannerView, didReceiveAdWithAdSize adSize: CGSize) {
-        NSLog("VeonPrebid iOS: Prebid banner loaded successfully")
+    func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, didLoadFrom sdk: SdkType) {
+        guard interstitialLoader === loader else { return }
+        NSLog("VeonPrebid iOS: Interstitial loaded from \(sdk.rawValue)")
         onAdLoaded?([
-            "configId": bannerView.configID,
+            "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": sdk.rawValue.lowercased()
         ])
     }
 
-    func bannerView(_ bannerView: PrebidMobile.BannerView, didFailToReceiveAdWith error: Error) {
-        let errorMsg = error.localizedDescription
-        NSLog("VeonPrebid iOS: Prebid banner failed to load - \(errorMsg)")
+    func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, didFailToLoad sdk: SdkType, error: Error?) {
+        guard interstitialLoader === loader else { return }
+        let message = error?.localizedDescription ?? "Unknown error"
+        NSLog("VeonPrebid iOS: Interstitial failed from \(sdk.rawValue): \(message)")
         onAdFailed?([
-            "configId": bannerView.configID,
+            "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "error": errorMsg,
-            "sdkType": "prebid"
+            "error": message,
+            "sdkType": sdk.rawValue.lowercased()
         ])
     }
 
-    func bannerViewDidRecordImpression(_ bannerView: PrebidMobile.BannerView) {
-        NSLog("VeonPrebid iOS: Banner recorded impression")
-    }
-
-    func bannerViewWillLeaveApplication(_ bannerView: PrebidMobile.BannerView) {
-        NSLog("VeonPrebid iOS: Banner will leave application")
-        onAdClicked?([
-            "configId": bannerView.configID,
-            "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
-        ])
-    }
-
-    func bannerViewWillPresentModal(_ bannerView: PrebidMobile.BannerView) {
+    func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, willPresent sdk: SdkType) {
+        guard interstitialLoader === loader else { return }
         onAdDisplayed?([
-            "configId": bannerView.configID,
+            "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
-            "sdkType": "prebid"
+            "sdkType": sdk.rawValue.lowercased()
+        ])
+    }
+
+    func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, didDismiss sdk: SdkType) {
+        guard interstitialLoader === loader else { return }
+        onAdClosed?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "sdkType": sdk.rawValue.lowercased()
+        ])
+    }
+
+    func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, didClick sdk: SdkType) {
+        guard interstitialLoader === loader else { return }
+        onAdClicked?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "sdkType": sdk.rawValue.lowercased()
+        ])
+    }
+
+    func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, didFailToShow sdk: SdkType, error: Error?) {
+        guard interstitialLoader === loader else { return }
+        onAdFailed?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "error": error?.localizedDescription ?? "Failed to show interstitial",
+            "sdkType": sdk.rawValue.lowercased()
         ])
     }
 }
@@ -190,36 +219,6 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
             "adUnitId": adParameters.adUnitId ?? "",
             "sdkType": rewardedSource ?? "unknown"
         ])
-    }
-}
-
-// MARK: - GADBannerViewDelegate
-
-extension VeonPrebidReactNativeView: GoogleMobileAds.BannerViewDelegate {
-
-    func bannerViewDidReceiveAd(_ bannerView: GoogleMobileAds.BannerView) {
-        NSLog("VeonPrebid iOS: GAM banner loaded successfully")
-        onAdLoaded?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": bannerView.adUnitID ?? "",
-            "sdkType": "gam"
-        ])
-    }
-
-    func bannerView(_ bannerView: GoogleMobileAds.BannerView,
-                    didFailToReceiveAdWithError error: Error) {
-        let errorMsg = error.localizedDescription
-        NSLog("VeonPrebid iOS: GAM banner failed to load - \(errorMsg)")
-        onAdFailed?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": bannerView.adUnitID ?? "",
-            "error": errorMsg,
-            "sdkType": "gam"
-        ])
-
-        // Fallback to Prebid ad when GAM fails
-        gamBanner = nil
-        loadPrebidBanner()
     }
 }
 

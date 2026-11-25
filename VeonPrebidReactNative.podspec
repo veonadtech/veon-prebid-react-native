@@ -25,6 +25,9 @@ Pod::Spec.new do |s|
   s.dependency "Google-Mobile-Ads-SDK", "13.6.0"
   s.dependency "VeonPrebidMobileGAMEventHandlers", "0.5.3"
   s.dependency "VeonPrebidMobile", "0.5.3"
+  s.dependency "VeonPrebidMultiAdLoader", "0.5.3"
+  s.dependency "VeonPrebidMultiAdLoaderGAM", "0.5.3"
+  s.dependency "VeonPrebidRemoteConfig", "0.5.3"
 
   s.static_framework = true
   s.swift_version = "5.0"
