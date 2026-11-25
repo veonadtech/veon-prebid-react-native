@@ -33,6 +33,8 @@ export default function App() {
 
   // Rewarded ad refs
   const rewardedAdRef = useRef<AdController>(null);
+  const pendingRewardRef = useRef<RewardData | null>(null);
+  const rewardedClosedRef = useRef(false);
 
   /**
    * Initialize Prebid SDK on mount
@@ -119,14 +121,28 @@ export default function App() {
 
   const handleRewardedClosed = (data: AdEventData) => {
     console.log('Rewarded closed:', data);
+    rewardedClosedRef.current = true;
+    const reward = pendingRewardRef.current;
+    if (reward) {
+      pendingRewardRef.current = null;
+      setTimeout(() => showRewardAlert(reward), 200);
+    }
   };
 
-  const handleRewardEarned = (data: RewardData) => {
-    console.log('Reward earned:', data);
+  const showRewardAlert = (data: RewardData) => {
     Alert.alert(
       'Reward Earned!',
       `Type: ${data.rewardType || '(none)'}\nAmount: ${data.rewardAmount ?? 0}`
     );
+  };
+
+  const handleRewardEarned = (data: RewardData) => {
+    console.log('Reward earned:', data);
+    if (rewardedClosedRef.current) {
+      showRewardAlert(data);
+    } else {
+      pendingRewardRef.current = data;
+    }
   };
 
   /**
@@ -164,6 +180,8 @@ export default function App() {
    * Rewarded Ad Controls
    */
   const loadRewarded = () => {
+    pendingRewardRef.current = null;
+    rewardedClosedRef.current = false;
     console.log('Loading rewarded...');
     rewardedAdRef.current?.loadRewarded();
   };

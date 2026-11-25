@@ -36,6 +36,7 @@ export interface AdEventData {
   configId?: string;
   adUnitId?: string;
   sdkType?: string;
+  message?: string;
   error?: string;
 }
 

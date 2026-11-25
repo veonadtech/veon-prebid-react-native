@@ -1,16 +1,16 @@
 # Veon Prebid React Native
 
-A React Native plugin for integrating Veon Prebid SDK with Google Ad Manager (GAM). Supports banner, interstitial, and rewarded video ads with waterfall approach (Prebid → GAM fallback).
+A React Native plugin for integrating Veon Prebid SDK with Google Ad Manager (GAM). Supports banner, interstitial, and rewarded video ads with Prebid bidding and GAM integration.
 
 ## Features
 
-✅ **Banner Ads** - Standard and custom sizes  
-✅ **Interstitial Ads** - Full-screen ads  
-✅ **Rewarded Video Ads** - User-rewarded video ads  
-✅ **Waterfall Approach** - Prebid first, GAM fallback  
-✅ **Explicit Control** - Manual load/show/hide methods  
-✅ **TypeScript Support** - Full type definitions  
-✅ **React Hooks** - `useVeonPrebidAd` hook for easy integration  
+✅ **Banner Ads** - Standard and custom sizes
+✅ **Interstitial Ads** - Full-screen ads
+✅ **Rewarded Video Ads** - User-rewarded video ads
+✅ **Prebid and GAM Integration** - Reports the ad source and source-specific load failures
+✅ **Explicit Control** - Manual load/show/hide methods
+✅ **TypeScript Support** - Full type definitions
+✅ **React Hooks** - `useVeonPrebidAd` hook for easy integration
 
 ## Installation
 
@@ -31,11 +31,16 @@ yarn add setupad-prebid-react-native
 
 2. Add SKAdNetworkItems (see [Google's documentation](https://developers.google.com/ad-manager/mobile-ads-sdk/ios/quick-start#update_your_infoplist))
 
-3. Install pods:
+3. After installing or updating this React Native package, resolve iOS dependencies:
 
 ```bash
 cd ios && pod install
 ```
+
+The adapter's podspec installs `VeonPrebidMobile` and
+`VeonPrebidMobileGAMEventHandlers` 0.5.3 and `Google-Mobile-Ads-SDK` 13.6.0.
+Do not add these pods separately to your Podfile. If your app uses
+`use_frameworks!`, use static linkage (`use_frameworks! :linkage => :static`).
 
 ### Android Setup
 
@@ -58,6 +63,8 @@ allprojects {
     }
 }
 ```
+
+3. Set `kotlinVersion` to `2.3.0` in the Android project. The Prebid Android 0.5.5 dependencies contain Kotlin 2.3 metadata, which the previous Kotlin 2.1 compiler cannot read.
 
 ## Usage
 
@@ -106,11 +113,15 @@ After any rejection, `initialize()` may be called again — the internal cache i
 ### 2. Display Banner Ad
 
 ```typescript
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { VeonPrebidAd, AdType, AdController } from 'setupad-prebid-react-native';
 
 function BannerExample() {
   const adRef = useRef<AdController>(null);
+
+  useEffect(() => {
+    adRef.current?.loadBanner();
+  }, []);
 
   return (
     <VeonPrebidAd
@@ -122,10 +133,10 @@ function BannerExample() {
       height={250}
       refreshInterval={60}
       onAdLoaded={(data) => {
-        console.log('Banner loaded from', data.sdk);
+        console.log('Banner loaded from', data.sdkType);
         adRef.current?.showBanner();
       }}
-      onAdFailed={(error) => console.error('Banner failed:', error)}
+      onAdFailed={(data) => console.error(data.sdkType, data.error)}
     />
   );
 }
@@ -135,6 +146,7 @@ function BannerExample() {
 
 ```typescript
 import React, { useRef, useEffect } from 'react';
+import { Button } from 'react-native';
 import { VeonPrebidAd, AdType, AdController } from 'setupad-prebid-react-native';
 
 function InterstitialExample() {
@@ -156,7 +168,8 @@ function InterstitialExample() {
         adType={AdType.INTERSTITIAL}
         configId="YOUR_CONFIG_ID"
         adUnitId="/YOUR_NETWORK_ID/YOUR_AD_UNIT"
-        onAdLoaded={(data) => console.log('Interstitial loaded')}
+        onAdLoaded={(data) => console.log('Interstitial loaded from', data.sdkType)}
+        onAdFailed={(data) => console.error(data.sdkType, data.error)}
         onAdClosed={() => console.log('Interstitial closed')}
       />
       <Button title="Show Interstitial" onPress={showAd} />
@@ -165,33 +178,58 @@ function InterstitialExample() {
 }
 ```
 
-### 4. Using Hooks
+### 4. Display Rewarded Ad
 
 ```typescript
+import React, { useRef } from 'react';
+import { Button } from 'react-native';
+import { VeonPrebidAd, AdType, type AdController } from 'setupad-prebid-react-native';
+
+function RewardedExample() {
+  const rewardedRef = useRef<AdController>(null);
+
+  return (
+    <>
+      <VeonPrebidAd
+        ref={rewardedRef}
+        adType={AdType.REWARD_VIDEO}
+        configId="YOUR_CONFIG_ID"
+        adUnitId="/YOUR_NETWORK_ID/YOUR_REWARDED_AD_UNIT"
+        onAdLoaded={(data) => console.log('Rewarded loaded from', data.sdkType)}
+        onAdFailed={(data) => console.error(data.sdkType, data.error)}
+        onAdRewardEarned={(reward) => {
+          console.log('Reward earned:', reward.rewardType, reward.rewardAmount);
+          // Grant the reward here, after the SDK reports that it was earned.
+        }}
+      />
+      <Button title="Load rewarded" onPress={() => rewardedRef.current?.loadRewarded()} />
+      <Button title="Show rewarded" onPress={() => rewardedRef.current?.showRewarded()} />
+    </>
+  );
+}
+```
+
+### 5. Using Hooks
+
+```typescript
+import React, { useEffect } from 'react';
 import { useVeonPrebidAd, AdType } from 'setupad-prebid-react-native';
 
 function HookExample() {
-  const { adRef, loadBanner, showBanner } = useVeonPrebidAd(
-    {
-      adType: AdType.BANNER,
-      configId: 'YOUR_CONFIG_ID',
-      adUnitId: '/YOUR_NETWORK_ID/YOUR_AD_UNIT',
-      width: 300,
-      height: 250,
-    },
-    {
-      onAdLoaded: (data) => {
-        console.log('Ad loaded:', data);
-        showBanner();
-      },
-    }
-  );
+  const config = {
+    adType: AdType.BANNER,
+    configId: 'YOUR_CONFIG_ID',
+    adUnitId: '/YOUR_NETWORK_ID/YOUR_AD_UNIT',
+    width: 300,
+    height: 250,
+  } as const;
+  const { adRef, loadBanner, showBanner } = useVeonPrebidAd(config);
 
   useEffect(() => {
     loadBanner();
-  }, []);
+  }, [loadBanner]);
 
-  return <VeonPrebidAd ref={adRef} />;
+  return <VeonPrebidAd ref={adRef} {...config} onAdLoaded={showBanner} />;
 }
 ```
 
@@ -219,7 +257,7 @@ Singleton class for SDK initialization.
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
-| `adType` | `AdType` | ✅ | Ad type: `banner`, `interstitial`, or `rewardVideo` |
+| `adType` | `AdType` | ✅ | Ad type: `banner`, `interstitial`, or `rewardvideo` |
 | `configId` | `string` | ✅ | Prebid config ID |
 | `adUnitId` | `string` | ✅ | Google Ad Manager ad unit ID |
 | `width` | `number` | For banners | Ad width in pixels |
@@ -227,9 +265,12 @@ Singleton class for SDK initialization.
 | `refreshInterval` | `number` | ❌ | Refresh interval (30-120 seconds, default: 30) |
 | `onAdLoaded` | `function` | ❌ | Called when ad is loaded |
 | `onAdDisplayed` | `function` | ❌ | Called when ad is displayed |
-| `onAdFailed` | `function` | ❌ | Called when ad fails |
+| `onAdFailed` | `function` | ❌ | Reports a source failure or a Prebid bid that did not win, with `error` and, when known, `sdkType` |
 | `onAdClicked` | `function` | ❌ | Called when ad is clicked |
 | `onAdClosed` | `function` | ❌ | Called when ad is closed |
+| `onAdRewardEarned` | `function` | ❌ | Reports a rewarded ad reward after the SDK confirms it was earned |
+
+`onAdLoaded` identifies the loaded ad. A failure from one source can be followed by a successful load from the other source. Treat `onAdRewardEarned` as the reward signal; loading or closing the ad does not grant a reward.
 
 #### Ref Methods (AdController)
 
@@ -241,6 +282,8 @@ interface AdController {
   loadInterstitial(): void;
   showInterstitial(): void;
   hideInterstitial(): void;
+  loadRewarded(): void;
+  showRewarded(): void;
   pauseAuction(): void;
   resumeAuction(): void;
   destroyAuction(): void;
@@ -258,33 +301,46 @@ const {
   loadInterstitial,
   showInterstitial,
   hideInterstitial,
+  loadRewarded,
+  showRewarded,
   pauseAuction,
   resumeAuction,
   destroyAuction,
-} = useVeonPrebidAd(config, eventListener);
+} = useVeonPrebidAd(config);
 ```
 
 ## Types
 
 ```typescript
-enum AdType {
-  BANNER = 'banner',
-  INTERSTITIAL = 'interstitial',
-  REWARD_VIDEO = 'rewardVideo',
-}
+const AdType = {
+  BANNER: 'banner',
+  INTERSTITIAL: 'interstitial',
+  REWARD_VIDEO: 'rewardvideo',
+} as const;
 
 interface PrebidConfig {
   prebidHost: string;
   configHost: string;
   accountId: string;
   timeoutMillis?: number;
+  initTimeoutMillis?: number;
   pbsDebug?: boolean;
 }
 
 interface AdEventData {
-  adId?: string;
-  sdk?: string; // 'PREBID' or 'GAM'
+  configId?: string;
+  adUnitId?: string;
+  sdkType?: string; // 'prebid' or 'gam' when known
   message?: string;
+  error?: string;
+}
+
+interface RewardData {
+  configId?: string;
+  adUnitId?: string;
+  sdkType?: string;
+  rewardType?: string;
+  rewardAmount?: number;
 }
 ```
 
@@ -309,23 +365,39 @@ interface AdEventData {
 
 ### Android
 
-**Issue:** Build fails with "Maven repository not found"  
+**Issue:** Build fails with "Maven repository not found"
 **Solution:** Add JitPack repository to `android/build.gradle`
 
-**Issue:** Ads not showing  
-**Solution:** Check LogCat for "VeonPrebidView" logs
+**Issue:** Ads not showing
+**Solution:** Check LogCat for `VeonPrebidRN` logs. A GAM `network error` is the Android Next-Gen SDK's general message for its network error code; it does not include the original request failure. Check the GAM ad unit ID and network setup.
 
 ### iOS
 
-**Issue:** Build fails with "Module not found"  
+**Issue:** Build fails with "Module not found"
 **Solution:** Run `cd ios && pod install`
 
-**Issue:** Ads not showing  
-**Solution:** Check Xcode console for "LOG:" messages
+**Issue:** React Native 0.81 with Xcode 26 fails while compiling `fmt 11.0.2` with a `consteval` error.
+
+**Solution:** In your existing Podfile `post_install` block, after `react_native_post_install`, compile only the `fmt` pod as C++17:
+
+```ruby
+installer.pods_project.targets.each do |target|
+  next unless target.name == 'fmt'
+
+  target.build_configurations.each do |configuration|
+    configuration.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+  end
+end
+```
+
+Then run `cd ios && pod install` again. This workaround is for that React Native and Xcode combination; the Veon SDK pods do not require it.
+
+**Issue:** Ads not showing
+**Solution:** Check Xcode console for `VeonPrebid iOS` messages.
 
 ## Example App
 
-See the `example/` directory for a complete working example with banner and interstitial ads.
+See the `example/` directory for banner, interstitial, and rewarded ad examples.
 
 ```bash
 cd example
@@ -337,9 +409,9 @@ npm run android
 
 ## Requirements
 
-- React Native >= 0.70
-- iOS >= 11.0
-- Android minSdkVersion >= 21
+- React Native >= 0.76
+- iOS >= 15.1 (React Native 0.76+)
+- Android minSdkVersion >= 24
 
 ## License
 
