@@ -17,9 +17,6 @@ export interface VeonPrebidViewProps {
   onAdLoaded?: (event: {
     nativeEvent: { adId?: string; sdk?: string; message?: string };
   }) => void;
-  onDemandResult?: (event: {
-    nativeEvent: { adId?: string; sdk?: string; message?: string };
-  }) => void;
   onAdDisplayed?: (event: {
     nativeEvent: { adId?: string; sdk?: string; message?: string };
   }) => void;
@@ -74,7 +71,6 @@ export interface VeonPrebidAdProps {
   refreshInterval?: number;
   style?: any;
   onAdLoaded?: (data: AdEventData) => void;
-  onDemandResult?: (data: AdEventData) => void;
   onAdDisplayed?: (data: AdEventData) => void;
   onAdFailed?: (data: AdEventData) => void;
   onAdClicked?: (data: AdEventData) => void;

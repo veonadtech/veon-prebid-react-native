@@ -136,7 +136,6 @@ function BannerExample() {
         console.log('Banner loaded from', data.sdkType);
         adRef.current?.showBanner();
       }}
-      onDemandResult={(data) => console.log('Prebid demand:', data.message)}
       onAdFailed={(data) => console.error(data.sdkType, data.error)}
     />
   );
@@ -170,7 +169,6 @@ function InterstitialExample() {
         configId="YOUR_CONFIG_ID"
         adUnitId="/YOUR_NETWORK_ID/YOUR_AD_UNIT"
         onAdLoaded={(data) => console.log('Interstitial loaded from', data.sdkType)}
-        onDemandResult={(data) => console.log('Ad server result:', data.message)}
         onAdFailed={(data) => console.error(data.sdkType, data.error)}
         onAdClosed={() => console.log('Interstitial closed')}
       />
@@ -266,14 +264,13 @@ Singleton class for SDK initialization.
 | `height` | `number` | For banners | Ad height in pixels |
 | `refreshInterval` | `number` | ❌ | Refresh interval (30-120 seconds, default: 30) |
 | `onAdLoaded` | `function` | ❌ | Called when ad is loaded |
-| `onDemandResult` | `function` | ❌ | iOS: reports the Prebid banner demand result, or a successful GAM interstitial request that selected a Prebid line item |
 | `onAdDisplayed` | `function` | ❌ | Called when ad is displayed |
 | `onAdFailed` | `function` | ❌ | Reports a source failure or a Prebid bid that did not win, with `error` and, when known, `sdkType` |
 | `onAdClicked` | `function` | ❌ | Called when ad is clicked |
 | `onAdClosed` | `function` | ❌ | Called when ad is closed |
 | `onAdRewardEarned` | `function` | ❌ | Reports a rewarded ad reward after the SDK confirms it was earned |
 
-`onAdLoaded` identifies the loaded ad. A Prebid bid request can succeed without producing a separate ad: on iOS, `onDemandResult` reports that banner bidding result, while `onAdLoaded` fires when the banner loads. A failure from one source can be followed by a successful load from the other source. Treat `onAdRewardEarned` as the reward signal; loading or closing the ad does not grant a reward.
+`onAdLoaded` identifies the loaded ad. A failure from one source can be followed by a successful load from the other source. Treat `onAdRewardEarned` as the reward signal; loading or closing the ad does not grant a reward.
 
 #### Ref Methods (AdController)
 

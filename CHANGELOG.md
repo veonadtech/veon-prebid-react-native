@@ -8,14 +8,13 @@
 * Updated the example's CocoaPods version and added an Xcode 26 workaround for React Native's `fmt` pod.
 
 ### Added
-* `onDemandResult` reports the Prebid banner demand result on iOS and a successful GAM interstitial request when a Prebid line item wins.
 * Source-specific Prebid and GAM load diagnostics for iOS interstitial and rewarded ads, and Android rewarded ads. A failure from one source can be followed by a successful load from the other.
 * iOS XCTest target and coverage for the native event bridge and rewarded source and reward payload; updated Android and JS event tests.
 
 ### Fixed
 * Rewarded callbacks report the selected ad source instead of inferring it from the presence of a Prebid bid. Android uses an Activity to present a Prebid rewarded creative.
 * Reward notifications are forwarded from the ad SDK's earned-reward callback; the example shows its reward alert after the ad closes.
-* iOS banner, interstitial, and rewarded callbacks now expose the relevant source or demand result to React Native.
+* iOS banner, interstitial, and rewarded callbacks now expose the relevant ad source to React Native.
 
 ## 0.6.0
 ### Changed

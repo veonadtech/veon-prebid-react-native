@@ -43,7 +43,6 @@ RCT_EXTERN_METHOD(showRewarded:(nonnull NSNumber *)node)
 
 // Events (must be AFTER commands)
 RCT_EXPORT_VIEW_PROPERTY(onAdLoaded, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onDemandResult, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onAdDisplayed, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onAdFailed, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onAdClicked, RCTDirectEventBlock)

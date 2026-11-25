@@ -20,7 +20,6 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
       height,
       refreshInterval = 30,
       onAdLoaded,
-      onDemandResult,
       onAdDisplayed,
       onAdFailed,
       onAdClicked,
@@ -78,15 +77,6 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
         onAdLoaded?.(data);
       },
       [onAdLoaded]
-    );
-
-    const handleDemandResult = useCallback(
-      (event: any) => {
-        const data: AdEventData = event.nativeEvent;
-        console.log('Prebid demand result:', data);
-        onDemandResult?.(data);
-      },
-      [onDemandResult]
     );
 
     const handleAdDisplayed = useCallback(
@@ -154,7 +144,6 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
           height={height as number}
           refreshInterval={refreshInterval as number}
           onAdLoaded={handleAdLoaded}
-          onDemandResult={handleDemandResult}
           onAdDisplayed={handleAdDisplayed}
           onAdFailed={handleAdFailed}
           onAdClicked={handleAdClicked}

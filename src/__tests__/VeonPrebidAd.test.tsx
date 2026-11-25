@@ -330,33 +330,6 @@ describe('VeonPrebidAd', () => {
       );
     });
 
-    it('should forward the Prebid demand result with its source and message', () => {
-      const onDemandResult = jest.fn();
-      const { getByTestId } = render(
-        <VeonPrebidAd
-          adType="banner"
-          configId="test"
-          adUnitId="/test/unit"
-          width={320}
-          height={50}
-          onDemandResult={onDemandResult}
-        />
-      );
-
-      const result = {
-        configId: 'test',
-        adUnitId: '/test/unit',
-        sdkType: 'prebid',
-        message: 'prebidDemandFetchSuccess',
-      };
-      act(() => {
-        getByTestId('native-view').props.onDemandResult({ nativeEvent: result });
-      });
-
-      expect(onDemandResult).toHaveBeenCalledTimes(1);
-      expect(onDemandResult).toHaveBeenCalledWith(result);
-    });
-
     it('should call onAdFailed when native emits error event', () => {
       const onAdFailed = jest.fn();
       const { getByTestId } = render(

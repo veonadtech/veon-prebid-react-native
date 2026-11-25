@@ -169,7 +169,6 @@ class VeonPrebidReactNativeViewManager(
     override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
         return mapOf(
             "onAdLoaded" to mapOf("registrationName" to "onAdLoaded"),
-            "onDemandResult" to mapOf("registrationName" to "onDemandResult"),
             "onAdDisplayed" to mapOf("registrationName" to "onAdDisplayed"),
             "onAdFailed" to mapOf("registrationName" to "onAdFailed"),
             "onAdClicked" to mapOf("registrationName" to "onAdClicked"),

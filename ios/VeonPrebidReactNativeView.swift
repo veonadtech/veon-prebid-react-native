@@ -182,7 +182,6 @@ final class ReactNativeInterstitialEventHandler: NSObject, InterstitialEventHand
     private let onSourceSelected: (String) -> Void
     private let onPrebidUnavailable: (String) -> Void
     private let onGamFailure: (Error?) -> Void
-    private let onGamServedPrebid: () -> Void
     private var hadPrebidBid = false
 
     weak var loadingDelegate: InterstitialEventLoadingDelegate?
@@ -194,13 +193,11 @@ final class ReactNativeInterstitialEventHandler: NSObject, InterstitialEventHand
 
     init(adUnitId: String, onSourceSelected: @escaping (String) -> Void,
          onPrebidUnavailable: @escaping (String) -> Void,
-         onGamFailure: @escaping (Error?) -> Void,
-         onGamServedPrebid: @escaping () -> Void) {
+         onGamFailure: @escaping (Error?) -> Void) {
         gamHandler = GAMInterstitialEventHandler(adUnitID: adUnitId)
         self.onSourceSelected = onSourceSelected
         self.onPrebidUnavailable = onPrebidUnavailable
         self.onGamFailure = onGamFailure
-        self.onGamServedPrebid = onGamServedPrebid
         super.init()
         gamHandler.loadingDelegate = self
     }
@@ -218,7 +215,6 @@ final class ReactNativeInterstitialEventHandler: NSObject, InterstitialEventHand
     }
 
     func prebidDidWin() {
-        onGamServedPrebid()
         onSourceSelected("prebid")
         loadingDelegate?.prebidDidWin()
     }
@@ -325,7 +321,6 @@ class VeonPrebidReactNativeView: UIView {
     // MARK: - React Native Events
 
     @objc var onAdLoaded: RCTDirectEventBlock?
-    @objc var onDemandResult: RCTDirectEventBlock?
     @objc var onAdDisplayed: RCTDirectEventBlock?
     @objc var onAdFailed: RCTDirectEventBlock?
     @objc var onAdClicked: RCTDirectEventBlock?
@@ -531,14 +526,6 @@ class VeonPrebidReactNativeView: UIView {
             guard let self = self, let gamBanner = self.gamBanner else { return }
             NSLog("VeonPrebid iOS: Prebid demand fetch for GAM - \(resultCode.name())")
 
-            self.onDemandResult?([
-                "configId": configId,
-                "adUnitId": adUnitId,
-                "sdkType": "prebid",
-                "message": resultCode.name(),
-                "error": resultCode == .prebidDemandFetchSuccess ? "" : resultCode.name()
-            ])
-
             // Load GAM Ad
             gamBanner.load(gamRequest)
         }
@@ -603,14 +590,6 @@ class VeonPrebidReactNativeView: UIView {
                     "adUnitId": adUnitId,
                     "error": message,
                     "sdkType": "gam"
-                ])
-            },
-            onGamServedPrebid: { [weak self] in
-                self?.onDemandResult?([
-                    "configId": configId,
-                    "adUnitId": adUnitId,
-                    "sdkType": "gam",
-                    "message": "GAM request succeeded; Prebid line item won"
                 ])
             }
         )

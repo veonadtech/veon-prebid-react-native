@@ -186,7 +186,6 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
 
         // Should not crash — these are the exact keys Fabric ComponentView uses
         view.setValue(block, forKey: "onAdLoaded")
-        view.setValue(block, forKey: "onDemandResult")
         view.setValue(block, forKey: "onAdDisplayed")
         view.setValue(block, forKey: "onAdFailed")
         view.setValue(block, forKey: "onAdClicked")

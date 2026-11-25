@@ -76,11 +76,6 @@ export default function App() {
     Alert.alert('Banner', `Ad loaded from ${data.sdkType}`);
   };
 
-  const handleBannerDemandResult = (data: AdEventData) => {
-    console.log('Banner Prebid demand:', data);
-    Alert.alert('Banner Prebid', data.message ?? 'Unknown demand result');
-  };
-
   const handleBannerFailed = (data: AdEventData) => {
     console.error('Banner failed:', data.error, `SDK: ${data.sdkType}`);
     Alert.alert('Banner Error', `${data.error}\n\nSDK: ${data.sdkType}`);
@@ -96,11 +91,6 @@ export default function App() {
   const handleInterstitialLoaded = (data: AdEventData) => {
     console.log('Interstitial loaded:', data);
     Alert.alert('Interstitial', `Ad loaded from ${data.sdkType}`);
-  };
-
-  const handleInterstitialDemandResult = (data: AdEventData) => {
-    console.log('Interstitial GAM result:', data);
-    Alert.alert('Interstitial GAM', data.message ?? 'GAM request completed');
   };
 
   const handleInterstitialFailed = (data: AdEventData) => {
@@ -236,7 +226,6 @@ export default function App() {
                   height={50}
                   refreshInterval={30}
                   onAdLoaded={handleBannerLoaded}
-                  onDemandResult={handleBannerDemandResult}
                   onAdFailed={handleBannerFailed}
                   onAdClicked={handleBannerClicked}
                   style={styles.bannerAd}
@@ -263,7 +252,6 @@ export default function App() {
                 configId="beeline_uz_android_universal_interstitial" // Replace with your config ID
                 adUnitId="ca-app-pub-3940256099942544/1033173712" // Replace with your ad unit ID
                 onAdLoaded={handleInterstitialLoaded}
-                onDemandResult={handleInterstitialDemandResult}
                 onAdFailed={handleInterstitialFailed}
                 onAdClosed={handleInterstitialClosed}
               />
