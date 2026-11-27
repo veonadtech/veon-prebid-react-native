@@ -1,5 +1,6 @@
 package com.setupadprebidreactnative
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -392,7 +393,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       val eventHandler = TrackedRewardedEventHandler(activity, adUnitId)
       // Prebid presents the winning full-screen creative through this context.
       // A ThemedReactContext can load it, but its interstitial manager requires an Activity to show it.
-      rewardedAdUnit = RewardedAdUnit(activity, configId, eventHandler)
+      rewardedAdUnit = TrackedRewardedAdUnit(activity, configId, eventHandler)
 
       Log.d(TAG, "RewardedAdUnit created successfully")
 
@@ -510,6 +511,12 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     failures.record(sdk, error)?.let { sendEvent("onAdFailed", it) }
   }
 
+  // The SDK stores the auction error here before passing a null bid to the event handler.
+  private class TrackedRewardedAdUnit(context: Context, configId: String, handler: RewardedEventHandler) :
+    RewardedAdUnit(context, configId, handler) {
+    fun prebidErrorMessage(): String? = prebidException?.message
+  }
+
   private inner class TrackedRewardedEventHandler(activity: android.app.Activity, adUnitId: String) : RewardedEventHandler {
     private val delegate = NextGenRewardedEventHandler(activity, adUnitId)
     @Volatile private var hadPrebidBid = false
@@ -572,8 +579,10 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       skipPrematureRewardedClose = false
       hadPrebidBid = bid != null && bid.price > 0
       if (!hadPrebidBid) {
-        Log.d(TAG, "Prebid did not return a winning bid or the ConfigId is wrong")
-        runOnMainThread { sendEvent("onAdSourceFailed", "Prebid did not return a winning bid, or the ConfigId is wrong", SdkType.PREBID) }
+        val message = (rewardedAdUnit as? TrackedRewardedAdUnit)?.prebidErrorMessage()
+          ?: "Prebid did not return a winning bid"
+        Log.d(TAG, "Prebid rewarded failed: $message")
+        runOnMainThread { sendEvent("onAdSourceFailed", message, SdkType.PREBID) }
       }
       delegate.requestAdWithBid(bid)
     }
