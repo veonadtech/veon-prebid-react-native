@@ -171,6 +171,7 @@ class VeonPrebidReactNativeViewManager(
             "onAdLoaded" to mapOf("registrationName" to "onAdLoaded"),
             "onAdDisplayed" to mapOf("registrationName" to "onAdDisplayed"),
             "onAdFailed" to mapOf("registrationName" to "onAdFailed"),
+            "onAdSourceFailed" to mapOf("registrationName" to "onAdSourceFailed"),
             "onAdClicked" to mapOf("registrationName" to "onAdClicked"),
             "onAdClosed" to mapOf("registrationName" to "onAdClosed"),
             "onAdRewardEarned" to mapOf("registrationName" to "onAdRewardEarned")

@@ -8,21 +8,42 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		5901EE1765D705FF48F5C440 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 615A4F3ACF809C6D51E20541 /* Foundation.framework */; };
+		697F0529ABB450F1023C93BF /* VeonPrebidReactNativeViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531E449B683A493C66AABEE8 /* VeonPrebidReactNativeViewTests.swift */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		794B9AAA0C52D029CC626C5C /* Pods_VeonPrebidReactNativeExample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9B1F0F240D571B75EE03373 /* Pods_VeonPrebidReactNativeExample.framework */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		AB8003730659FCCD9BB26026 /* Pods_VeonPrebidReactNativeExampleTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5773F5C54D5A851E0892F054 /* Pods_VeonPrebidReactNativeExampleTests.framework */; };
 		DD043CE0C561EAE2B556177D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0964B8E5CF4852AE793F9DE1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = VeonPrebidReactNativeExample;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* VeonPrebidReactNativeExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VeonPrebidReactNativeExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = VeonPrebidReactNativeExample/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = VeonPrebidReactNativeExample/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = VeonPrebidReactNativeExample/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		37F73C3F7783FC5ACED9E030 /* Pods-VeonPrebidReactNativeExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VeonPrebidReactNativeExampleTests.release.xcconfig"; path = "Target Support Files/Pods-VeonPrebidReactNativeExampleTests/Pods-VeonPrebidReactNativeExampleTests.release.xcconfig"; sourceTree = "<group>"; };
+		531E449B683A493C66AABEE8 /* VeonPrebidReactNativeViewTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VeonPrebidReactNativeViewTests.swift; sourceTree = "<group>"; };
+		5773F5C54D5A851E0892F054 /* Pods_VeonPrebidReactNativeExampleTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VeonPrebidReactNativeExampleTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CE0EEA04B5061910BCCF7CB /* Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests/Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
+		615A4F3ACF809C6D51E20541 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		6BEF52BC9B187C59F630E302 /* Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.release.xcconfig"; path = "Target Support Files/Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests/Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = VeonPrebidReactNativeExample/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = VeonPrebidReactNativeExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		921EE969278918B92A7285AD /* Pods-VeonPrebidReactNativeExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VeonPrebidReactNativeExample.release.xcconfig"; path = "Target Support Files/Pods-VeonPrebidReactNativeExample/Pods-VeonPrebidReactNativeExample.release.xcconfig"; sourceTree = "<group>"; };
 		93F1670E129BAD82FCFDB3BD /* Pods-VeonPrebidReactNativeExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VeonPrebidReactNativeExample.debug.xcconfig"; path = "Target Support Files/Pods-VeonPrebidReactNativeExample/Pods-VeonPrebidReactNativeExample.debug.xcconfig"; sourceTree = "<group>"; };
+		95EC0ACF7445A5A6372950DE /* Pods-VeonPrebidReactNativeExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VeonPrebidReactNativeExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-VeonPrebidReactNativeExampleTests/Pods-VeonPrebidReactNativeExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
+		9FE865F36A7D664BF42EE1B8 /* VeonPrebidReactNativeExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VeonPrebidReactNativeExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9B1F0F240D571B75EE03373 /* Pods_VeonPrebidReactNativeExample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VeonPrebidReactNativeExample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -33,6 +54,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				794B9AAA0C52D029CC626C5C /* Pods_VeonPrebidReactNativeExample.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F0D98E79952C82D229D27C6D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5901EE1765D705FF48F5C440 /* Foundation.framework in Frameworks */,
+				AB8003730659FCCD9BB26026 /* Pods_VeonPrebidReactNativeExampleTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,6 +86,8 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				A9B1F0F240D571B75EE03373 /* Pods_VeonPrebidReactNativeExample.framework */,
+				FF2D626490E4D2C997284768 /* iOS */,
+				5773F5C54D5A851E0892F054 /* Pods_VeonPrebidReactNativeExampleTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -75,6 +107,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				CEFD8AE6779B703381D57264 /* VeonPrebidReactNativeExampleTests */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -85,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* VeonPrebidReactNativeExample.app */,
+				9FE865F36A7D664BF42EE1B8 /* VeonPrebidReactNativeExampleTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -94,13 +128,53 @@
 			children = (
 				93F1670E129BAD82FCFDB3BD /* Pods-VeonPrebidReactNativeExample.debug.xcconfig */,
 				921EE969278918B92A7285AD /* Pods-VeonPrebidReactNativeExample.release.xcconfig */,
+				6BEF52BC9B187C59F630E302 /* Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.release.xcconfig */,
+				5CE0EEA04B5061910BCCF7CB /* Pods-VeonPrebidReactNativeExample-VeonPrebidReactNativeExampleTests.debug.xcconfig */,
+				37F73C3F7783FC5ACED9E030 /* Pods-VeonPrebidReactNativeExampleTests.release.xcconfig */,
+				95EC0ACF7445A5A6372950DE /* Pods-VeonPrebidReactNativeExampleTests.debug.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		CEFD8AE6779B703381D57264 /* VeonPrebidReactNativeExampleTests */ = {
+			isa = PBXGroup;
+			children = (
+				531E449B683A493C66AABEE8 /* VeonPrebidReactNativeViewTests.swift */,
+			);
+			name = VeonPrebidReactNativeExampleTests;
+			path = VeonPrebidReactNativeExampleTests;
+			sourceTree = "<group>";
+		};
+		FF2D626490E4D2C997284768 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				615A4F3ACF809C6D51E20541 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		002BF54AEC589F55A91A389D /* VeonPrebidReactNativeExampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D50D4B4F30CF2898E9D49F93 /* Build configuration list for PBXNativeTarget "VeonPrebidReactNativeExampleTests" */;
+			buildPhases = (
+				F0D296727C4E962138619917 /* [CP] Check Pods Manifest.lock */,
+				52E3CCFA19A2F2FCDC05668E /* Sources */,
+				F0D98E79952C82D229D27C6D /* Frameworks */,
+				20FB5B77CE3DAA5FCDCBFB08 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				31CC4BBD5D85D84E071F242E /* PBXTargetDependency */,
+			);
+			name = VeonPrebidReactNativeExampleTests;
+			productName = VeonPrebidReactNativeExampleTests;
+			productReference = 9FE865F36A7D664BF42EE1B8 /* VeonPrebidReactNativeExampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		13B07F861A680F5B00A75B9A /* VeonPrebidReactNativeExample */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "VeonPrebidReactNativeExample" */;
@@ -149,6 +223,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* VeonPrebidReactNativeExample */,
+				002BF54AEC589F55A91A389D /* VeonPrebidReactNativeExampleTests */,
 			);
 		};
 /* End PBXProject section */
@@ -161,6 +236,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				DD043CE0C561EAE2B556177D /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		20FB5B77CE3DAA5FCDCBFB08 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +321,28 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-VeonPrebidReactNativeExample/Pods-VeonPrebidReactNativeExample-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		F0D296727C4E962138619917 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-VeonPrebidReactNativeExampleTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -250,7 +354,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		52E3CCFA19A2F2FCDC05668E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				697F0529ABB450F1023C93BF /* VeonPrebidReactNativeViewTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		31CC4BBD5D85D84E071F242E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = VeonPrebidReactNativeExample;
+			target = 13B07F861A680F5B00A75B9A /* VeonPrebidReactNativeExample */;
+			targetProxy = 0964B8E5CF4852AE793F9DE1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -304,6 +425,24 @@
 				PRODUCT_NAME = VeonPrebidReactNativeExample;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		72A3A4CE70FD9BBAD52181AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 37F73C3F7783FC5ACED9E030 /* Pods-VeonPrebidReactNativeExampleTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				PRODUCT_BUNDLE_IDENTIFIER = setupadprebidreactnative.exampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VeonPrebidReactNativeExample.app/VeonPrebidReactNativeExample";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -477,6 +616,23 @@
 			};
 			name = Release;
 		};
+		F801F8EBFF11E6152366C808 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 95EC0ACF7445A5A6372950DE /* Pods-VeonPrebidReactNativeExampleTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				PRODUCT_BUNDLE_IDENTIFIER = setupadprebidreactnative.exampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VeonPrebidReactNativeExample.app/VeonPrebidReactNativeExample";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -494,6 +650,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D50D4B4F30CF2898E9D49F93 /* Build configuration list for PBXNativeTarget "VeonPrebidReactNativeExampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				72A3A4CE70FD9BBAD52181AE /* Release */,
+				F801F8EBFF11E6152366C808 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

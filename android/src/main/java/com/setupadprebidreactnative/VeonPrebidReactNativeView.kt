@@ -1,5 +1,6 @@
 package com.setupadprebidreactnative
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -21,7 +22,11 @@ import org.prebid.mobile.api.rendering.BannerView
 import org.prebid.mobile.api.rendering.RewardedAdUnit
 import org.prebid.mobile.api.rendering.listeners.RewardedAdUnitListener
 import org.prebid.mobile.eventhandlers.nextgen.NextGenRewardedEventHandler
+import org.prebid.mobile.rendering.bidding.data.bid.Bid
+import org.prebid.mobile.rendering.bidding.interfaces.RewardedEventHandler
+import org.prebid.mobile.rendering.bidding.listeners.RewardedVideoEventListener
 import org.prebid.mobile.rendering.interstitial.rewarded.Reward
+import java.util.concurrent.atomic.AtomicBoolean
 
 class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameLayout(reactContext) {
   private val TAG = "VeonPrebidRN"
@@ -30,6 +35,11 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   private var bannerLoader: MultiBannerLoaderNextGenGam? = null
   private var interstitialLoader: MultiInterstitialAdLoaderNextGenGam? = null
   private var rewardedAdUnit: RewardedAdUnit? = null
+  @Volatile private var rewardedSource: SdkType? = null
+  private val rewardedRewardSent = AtomicBoolean(false)
+  @Volatile private var skipPrematureRewardedClose = false
+  private val bannerFailures = SourceFailureTracker()
+  private val interstitialFailures = SourceFailureTracker()
 
   // Ad parameters - stored individually for compatibility with ViewManager
   private var adType: String? = null
@@ -118,6 +128,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     // Prebid OMID SDK registers a ContentObserver on the calling thread's Looper;
     // if that thread is not main, WebView calls from the observer will crash.
     runOnMainThread {
+      bannerFailures.reset()
       if (bannerLoader == null) {
         Log.d(TAG, "Banner loader is null, creating new one")
         createBannerLoader(cfg, aid)
@@ -201,6 +212,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
       bannerLoader?.setListener(object : MultiBannerViewListener {
         override fun onAdLoaded(view: View, sdk: SdkType) {
+          bannerFailures.reset()
           Log.d(TAG, "Banner LOADED from ${sdk.name}, isBannerShowing=$isBannerShowing")
           adView = view
           sendEvent("onAdLoaded", sdk)
@@ -218,7 +230,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
           val errorMsg = error ?: "Unknown error"
           val sdkName = sdk?.name ?: "unknown"
           Log.e(TAG, "Banner FAILED: $errorMsg (SDK: $sdkName)")
-          sendEvent("onAdFailed", errorMsg, sdk)
+          runOnMainThread { reportSourceFailure(bannerFailures, sdk, errorMsg) }
         }
 
         override fun onAdClicked(bannerView: BannerView?, sdk: SdkType) {
@@ -258,6 +270,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     val (cfg, aid) = requireParams("load interstitial") ?: return
 
     runOnMainThread {
+      interstitialFailures.reset()
       if (interstitialLoader == null) {
         createInterstitialLoader(cfg, aid)
       }
@@ -296,6 +309,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
 
       interstitialLoader?.setListener(object : MultiInterstitialAdListener {
         override fun onAdLoaded(sdk: SdkType) {
+          interstitialFailures.reset()
           Log.d(TAG, "Interstitial LOADED from ${sdk.name}")
           sendEvent("onAdLoaded", sdk)
         }
@@ -309,7 +323,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
           val errorMsg = error ?: "Unknown error"
           val sdkName = sdk?.name ?: "unknown"
           Log.e(TAG, "Interstitial FAILED: $errorMsg (SDK: $sdkName)")
-          sendEvent("onAdFailed", errorMsg, sdk)
+          runOnMainThread { reportSourceFailure(interstitialFailures, sdk, errorMsg) }
         }
 
         override fun onAdFailedToShow(error: String?, sdk: SdkType?) {
@@ -373,48 +387,56 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
         return
       }
 
-      val eventHandler = NextGenRewardedEventHandler(activity, adUnitId)
-      rewardedAdUnit = RewardedAdUnit(reactContext, configId, eventHandler)
+      rewardedSource = null
+      rewardedRewardSent.set(false)
+      skipPrematureRewardedClose = false
+      val eventHandler = TrackedRewardedEventHandler(activity, adUnitId)
+      // Prebid presents the winning full-screen creative through this context.
+      // A ThemedReactContext can load it, but its interstitial manager requires an Activity to show it.
+      rewardedAdUnit = TrackedRewardedAdUnit(activity, configId, eventHandler)
 
       Log.d(TAG, "RewardedAdUnit created successfully")
 
       rewardedAdUnit?.setRewardedAdUnitListener(object : RewardedAdUnitListener {
         override fun onAdLoaded(rewardedAdUnit: RewardedAdUnit?) {
-          val sdk = rewardedSdkType(rewardedAdUnit)
+          // The SDK may start the Prebid fallback internally after GAM fails,
+          // without calling the handler's onPrebidSdkWin callback again.
+          val sdk = rewardedSdkType() ?: SdkType.PREBID.also { rewardedSource = it }
           Log.d(TAG, "Rewarded LOADED from ${sdk.name}")
           sendEvent("onAdLoaded", sdk)
         }
 
         override fun onAdDisplayed(rewardedAdUnit: RewardedAdUnit?) {
-          val sdk = rewardedSdkType(rewardedAdUnit)
-          Log.d(TAG, "Rewarded DISPLAYED from ${sdk.name}")
+          val sdk = rewardedSdkType()
+          Log.d(TAG, "Rewarded DISPLAYED from ${sdk?.name ?: "unknown"}")
           sendEvent("onAdDisplayed", sdk)
         }
 
         override fun onAdFailed(rewardedAdUnit: RewardedAdUnit?, exception: AdException?) {
           val errorMsg = exception?.message ?: "Unknown error"
-          val sdk = rewardedSdkType(rewardedAdUnit)
+          val sdk = rewardedSource ?: SdkType.PREBID
           Log.e(TAG, "Rewarded FAILED: $errorMsg (SDK: ${sdk.name})")
           sendEvent("onAdFailed", errorMsg, sdk)
         }
 
         override fun onAdClicked(rewardedAdUnit: RewardedAdUnit?) {
-          val sdk = rewardedSdkType(rewardedAdUnit)
-          Log.d(TAG, "Rewarded clicked from ${sdk.name}")
+          val sdk = rewardedSdkType()
+          Log.d(TAG, "Rewarded clicked from ${sdk?.name ?: "unknown"}")
           sendEvent("onAdClicked", sdk)
         }
 
         override fun onAdClosed(rewardedAdUnit: RewardedAdUnit?) {
-          val sdk = rewardedSdkType(rewardedAdUnit)
-          Log.d(TAG, "Rewarded closed from ${sdk.name}")
+          val sdk = rewardedSdkType()
+          Log.d(TAG, "Rewarded closed from ${sdk?.name ?: "unknown"}")
           sendEvent("onAdClosed", sdk)
         }
 
         override fun onUserEarnedReward(rewardedAdUnit: RewardedAdUnit?, reward: Reward?) {
+          if (!rewardedRewardSent.compareAndSet(false, true)) return
           val rewardType = reward?.type ?: ""
           val rewardAmount = reward?.count ?: 0
-          val sdk = rewardedSdkType(rewardedAdUnit)
-          Log.d(TAG, "User earned reward - type: $rewardType, amount: $rewardAmount, sdk: ${sdk.name}")
+          val sdk = rewardedSdkType()
+          Log.d(TAG, "User earned reward - type: $rewardType, amount: $rewardAmount, sdk: ${sdk?.name ?: "unknown"}")
           sendRewardEvent(rewardType, rewardAmount, sdk)
         }
       })
@@ -447,7 +469,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
   }
 
   // Send event with SDK type (for successful events)
-  private fun sendEvent(eventName: String, sdk: SdkType) {
+  private fun sendEvent(eventName: String, sdk: SdkType?) {
     val event: WritableMap = Arguments.createMap()
     event.putString("configId", configId)
     event.putString("adUnitId", adUnitId)
@@ -457,7 +479,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       reactContext
         .getJSModule(RCTEventEmitter::class.java)
         .receiveEvent(id, eventName, event)
-      Log.d(TAG, "Event sent: $eventName - SDK: ${sdk.name}")
+      Log.d(TAG, "Event sent: $eventName - SDK: ${sdk?.name ?: "unknown"}")
     } catch (e: Exception) {
       Log.e(TAG, "Error sending event: $eventName", e)
     }
@@ -477,20 +499,101 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
     return cfg to aid
   }
 
-  // Detect which SDK actually rendered the rewarded ad.
-  // The Prebid rewarded path has no MultiRewardedAdLoader (unlike banner/interstitial),
-  // so we approximate from the auction's winning bid: if Prebid had a winner, treat as
-  // Prebid render; otherwise GAM mediation rendered it.
-  // WARNING: this approximation depends on internals of the Prebid SDK (the meaning
-  // of `bidResponse.winningBid` and which SDK actually renders after auction) and may
-  // break or become inaccurate with future Prebid SDK updates — re-check on each
-  // SDK version bump.
-  private fun rewardedSdkType(unit: RewardedAdUnit?): SdkType {
-    return if (unit?.bidResponse?.winningBid != null) SdkType.PREBID else SdkType.GAM
+  // The handler reports which ad actually won before the RewardedAdUnit callback.
+  private fun rewardedSdkType(): SdkType? {
+    return rewardedSource
+  }
+
+  // The two configured sources load independently. A failure is final only when
+  // both Prebid and GAM have failed in the current load cycle.
+  private fun reportSourceFailure(failures: SourceFailureTracker, sdk: SdkType?, error: String) {
+    sendEvent("onAdSourceFailed", error, sdk)
+    failures.record(sdk, error)?.let { sendEvent("onAdFailed", it) }
+  }
+
+  // The SDK stores the auction error here before passing a null bid to the event handler.
+  private class TrackedRewardedAdUnit(context: Context, configId: String, handler: RewardedEventHandler) :
+    RewardedAdUnit(context, configId, handler) {
+    fun prebidErrorMessage(): String? = prebidException?.message
+  }
+
+  private inner class TrackedRewardedEventHandler(activity: android.app.Activity, adUnitId: String) : RewardedEventHandler {
+    private val delegate = NextGenRewardedEventHandler(activity, adUnitId)
+    @Volatile private var hadPrebidBid = false
+
+    override fun setRewardedEventListener(listener: RewardedVideoEventListener) {
+      delegate.setRewardedEventListener(object : RewardedVideoEventListener {
+        override fun onPrebidSdkWin() {
+          rewardedSource = SdkType.PREBID
+          Log.d(TAG, "Rewarded source selected: PREBID")
+          listener.onPrebidSdkWin()
+        }
+
+        override fun onAdServerWin(reward: Any?) {
+          if (hadPrebidBid) Log.d(TAG, "GAM selected its own ad instead of the Prebid bid")
+          rewardedSource = SdkType.GAM
+          Log.d(TAG, "Rewarded source selected: GAM")
+          listener.onAdServerWin(reward)
+        }
+
+        override fun onAdFailed(exception: AdException?) {
+          val message = exception?.message ?: "Unknown GAM error"
+          Log.e(TAG, "GAM rewarded FAILED: $message")
+          runOnMainThread { sendEvent("onAdSourceFailed", message, SdkType.GAM) }
+          if (hadPrebidBid) {
+            rewardedSource = SdkType.PREBID
+            Log.d(TAG, "Rewarded falling back to PREBID after GAM failure")
+          }
+          listener.onAdFailed(exception)
+        }
+
+        override fun onAdClicked() = listener.onAdClicked()
+        override fun onAdClosed() {
+          if (skipPrematureRewardedClose) {
+            skipPrematureRewardedClose = false
+            Log.d(TAG, "Ignoring early GAM rewarded close emitted with reward")
+            return
+          }
+          listener.onAdClosed()
+        }
+        override fun onAdDisplayed() = listener.onAdDisplayed()
+        override fun onUserEarnedReward() {
+          Log.d(TAG, "GAM rewarded reward callback received")
+          skipPrematureRewardedClose = true
+          // SDK 0.5.5 emits an extra Closed in the same callback turn as Reward.
+          // Clear the guard on the next turn so a later genuine dismissal is
+          // still forwarded if that SDK behavior is corrected.
+          mainHandler.post { skipPrematureRewardedClose = false }
+          listener.onUserEarnedReward()
+          if (rewardedSource == SdkType.GAM && rewardedRewardSent.compareAndSet(false, true)) {
+            val reward = delegate.reward
+            sendRewardEvent(reward?.type ?: "", reward?.count ?: 0, SdkType.GAM)
+          }
+        }
+      })
+    }
+
+    override fun requestAdWithBid(bid: Bid?) {
+      rewardedSource = null
+      rewardedRewardSent.set(false)
+      skipPrematureRewardedClose = false
+      hadPrebidBid = bid != null && bid.price > 0
+      if (!hadPrebidBid) {
+        val message = (rewardedAdUnit as? TrackedRewardedAdUnit)?.prebidErrorMessage()
+          ?: "Prebid did not return a winning bid"
+        Log.d(TAG, "Prebid rewarded failed: $message")
+        runOnMainThread { sendEvent("onAdSourceFailed", message, SdkType.PREBID) }
+      }
+      delegate.requestAdWithBid(bid)
+    }
+    override fun show() = delegate.show()
+    override fun trackImpression() = delegate.trackImpression()
+    override fun destroy() = delegate.destroy()
+    override fun getReward(): Reward? = delegate.reward
   }
 
   // Send rewarded reward earned event
-  private fun sendRewardEvent(rewardType: String, rewardAmount: Int, sdk: SdkType) {
+  private fun sendRewardEvent(rewardType: String, rewardAmount: Int, sdk: SdkType?) {
     val event: WritableMap = Arguments.createMap()
     event.putString("configId", configId)
     event.putString("adUnitId", adUnitId)
@@ -502,7 +605,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       reactContext
         .getJSModule(RCTEventEmitter::class.java)
         .receiveEvent(id, "onAdRewardEarned", event)
-      Log.d(TAG, "Event sent: onAdRewardEarned - type: $rewardType, amount: $rewardAmount, sdk: ${sdk.name}")
+      Log.d(TAG, "Event sent: onAdRewardEarned - type: $rewardType, amount: $rewardAmount, sdk: ${sdk?.name ?: "unknown"}")
     } catch (e: Exception) {
       Log.e(TAG, "Error sending event: onAdRewardEarned", e)
     }
@@ -563,6 +666,7 @@ class VeonPrebidReactNativeView(private val reactContext: ReactContext) : FrameL
       Log.w(TAG, "Error destroying rewarded: $e")
     } finally {
       rewardedAdUnit = null
+      rewardedSource = null
     }
   }
 

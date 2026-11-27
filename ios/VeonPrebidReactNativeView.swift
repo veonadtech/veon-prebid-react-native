@@ -1,7 +1,8 @@
 import UIKit
 import GoogleMobileAds
 import PrebidMobile
-import PrebidMobileGAMEventHandlers
+import VeonPrebidMobileGAMEventHandlers
+import VeonPrebidMultiAdLoader
 
 // MARK: - AdParameters
 
@@ -28,6 +29,165 @@ struct AdParameters {
     }
 }
 
+/// Connects Prebid's rewarded auction to GAM. The GAM reward is forwarded only
+/// from the SDK's userDidEarnRewardHandler, after the ad is shown.
+final class ReactNativeRewardedEventHandler: NSObject, RewardedEventHandlerProtocol,
+    GoogleMobileAds.AdMetadataDelegate, GoogleMobileAds.FullScreenContentDelegate {
+    private let adUnitId: String
+    private let onSourceSelected: (String) -> Void
+    private let onPrebidUnavailable: (String) -> Void
+    private let onGamFailure: (Error?) -> Void
+    private let onGamImpression: () -> Void
+    private let onPresentationFailure: (Error) -> Void
+    private var loadedAd: GoogleMobileAds.RewardedAd?
+    private var appEventTimer: Timer?
+    private var hadPrebidBid = false
+    private var awaitingPrebidEvent = false
+    private var selectedSource: String?
+    private var didEarnReward = false
+
+    weak var loadingDelegate: InterstitialEventLoadingDelegate?
+    weak var interactionDelegate: RewardedEventInteractionDelegate?
+
+    var isReady: Bool { loadedAd != nil && selectedSource == "gam" }
+
+    init(adUnitId: String, onSourceSelected: @escaping (String) -> Void,
+         onPrebidUnavailable: @escaping (String) -> Void,
+         onGamFailure: @escaping (Error?) -> Void,
+         onGamImpression: @escaping () -> Void,
+         onPresentationFailure: @escaping (Error) -> Void) {
+        self.adUnitId = adUnitId
+        self.onSourceSelected = onSourceSelected
+        self.onPrebidUnavailable = onPrebidUnavailable
+        self.onGamFailure = onGamFailure
+        self.onGamImpression = onGamImpression
+        self.onPresentationFailure = onPresentationFailure
+        super.init()
+    }
+
+    func requestAd(with bidResponse: BidResponse?) {
+        appEventTimer?.invalidate()
+        appEventTimer = nil
+        loadedAd = nil
+        didEarnReward = false
+        hadPrebidBid = bidResponse?.winningBid != nil
+        awaitingPrebidEvent = hadPrebidBid
+        selectedSource = nil
+
+        if !hadPrebidBid {
+            onPrebidUnavailable("Prebid did not return a winning bid, or the ConfigId is wrong")
+        }
+
+        let request = GoogleMobileAds.AdManagerRequest()
+        GAMUtils.shared.prepareRequest(request, bidTargeting: bidResponse?.targetingInfo ?? [:])
+        GoogleMobileAds.RewardedAd.load(with: adUnitId, request: request) { [weak self] ad, error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let error {
+                    self.awaitingPrebidEvent = false
+                    self.markPrebidFallbackIfAvailable()
+                    self.onGamFailure(error)
+                    self.loadingDelegate?.failed(with: error)
+                    return
+                }
+                guard let ad else {
+                    let error = NSError(domain: "VeonPrebidReactNative", code: -1,
+                                        userInfo: [NSLocalizedDescriptionKey: "GAM returned no rewarded ad"])
+                    self.awaitingPrebidEvent = false
+                    self.markPrebidFallbackIfAvailable()
+                    self.onGamFailure(error)
+                    self.loadingDelegate?.failed(with: error)
+                    return
+                }
+                self.loadedAd = ad
+                ad.adMetadataDelegate = self
+                ad.fullScreenContentDelegate = self
+                if self.awaitingPrebidEvent {
+                    self.checkPrebidAppEvent(ad)
+                    if self.awaitingPrebidEvent {
+                        self.appEventTimer = Timer.scheduledTimer(withTimeInterval: 0.6,
+                                                                 repeats: false) { [weak self] _ in
+                            self?.selectGam()
+                        }
+                    }
+                } else {
+                    self.selectGam()
+                }
+            }
+        }
+    }
+
+    func show(from viewController: UIViewController?) {
+        guard let ad = loadedAd, let viewController else { return }
+        ad.present(from: viewController) { [weak self, weak ad] in
+            guard let self, let ad, !self.didEarnReward else { return }
+            self.didEarnReward = true
+            let reward = PrebidReward()
+            reward.type = ad.adReward.type
+            reward.count = ad.adReward.amount
+            self.interactionDelegate?.userDidEarnReward(reward)
+        }
+    }
+
+    func trackImpression() {}
+
+    func adMetadataDidChange(_ ad: GoogleMobileAds.AdMetadataProvider) {
+        guard let loadedAd, (ad as AnyObject) === loadedAd else { return }
+        checkPrebidAppEvent(loadedAd)
+    }
+
+    private func checkPrebidAppEvent(_ ad: GoogleMobileAds.RewardedAd) {
+        guard awaitingPrebidEvent, selectedSource == nil,
+              ad.adMetadata?[GADAdMetadataKey(rawValue: "AdTitle")] as? String
+                == "PrebidAppEvent" else { return }
+        appEventTimer?.invalidate()
+        appEventTimer = nil
+        awaitingPrebidEvent = false
+        selectedSource = "prebid"
+        onSourceSelected("prebid")
+        loadingDelegate?.prebidDidWin()
+    }
+
+    private func selectGam() {
+        guard loadedAd != nil, selectedSource == nil else { return }
+        appEventTimer?.invalidate()
+        appEventTimer = nil
+        awaitingPrebidEvent = false
+        selectedSource = "gam"
+        if hadPrebidBid {
+            NSLog("VeonPrebid iOS: GAM selected its own ad instead of the Prebid bid")
+        }
+        onSourceSelected("gam")
+        loadingDelegate?.adServerDidWin()
+    }
+
+    private func markPrebidFallbackIfAvailable() {
+        guard hadPrebidBid else { return }
+        selectedSource = "prebid"
+        onSourceSelected("prebid")
+    }
+
+    func adDidRecordClick(_ ad: GoogleMobileAds.FullScreenPresentingAd) {
+        interactionDelegate?.didClickAd()
+    }
+
+    func adDidDismissFullScreenContent(_ ad: GoogleMobileAds.FullScreenPresentingAd) {
+        loadedAd = nil
+        interactionDelegate?.didDismissAd()
+    }
+
+    func adDidRecordImpression(_ ad: GoogleMobileAds.FullScreenPresentingAd) {
+        guard selectedSource == "gam", let loadedAd, (ad as AnyObject) === loadedAd else { return }
+        onGamImpression()
+    }
+
+    func ad(_ ad: GoogleMobileAds.FullScreenPresentingAd,
+            didFailToPresentFullScreenContentWithError error: Error) {
+        loadedAd = nil
+        onPresentationFailure(error)
+    }
+}
+
 @objc(VeonPrebidReactNativeView)
 class VeonPrebidReactNativeView: UIView {
 
@@ -36,20 +196,22 @@ class VeonPrebidReactNativeView: UIView {
     /// Container view that holds ad views
     private var container: UIView?
 
-    /// GAM Banner view
-    var gamBanner: AdManagerBannerView?
-
-    /// Prebid banner view
-    private var prebidBannerView: PrebidMobile.BannerView?
-
-    /// Prebid banner ad unit (must be retained for auto-refresh to work)
-    private var bannerAdUnit: BannerAdUnit?
-
-    /// Prebid interstitial rendering ad unit
-    private var prebidInterstitial: InterstitialRenderingAdUnit?
+    var bannerLoader: VeonMultiBannerAdLoader?
+    var retiringBannerLoader: VeonMultiBannerAdLoader?
+    var loadedBannerView: UIView?
+    var bannerSourceErrors: [String] = []
+    var interstitialSourceErrors: [String] = []
+    private var bannerConstraints: [NSLayoutConstraint] = []
+    var interstitialLoader: VeonMultiInterstitialAdLoader?
+    var auctionPaused = false
 
     /// Prebid reward ad unit
     private var rewardedAdUnit: RewardedAdUnit?
+
+    /// Set by the rewarded event handler when Prebid or GAM wins.
+    var rewardedSource: String?
+    var rewardedPrebidUnavailable = false
+    var rewardedGamFailed = false
 
     /// Ad parameters
     var adParameters = AdParameters()
@@ -109,6 +271,7 @@ class VeonPrebidReactNativeView: UIView {
     @objc var onAdLoaded: RCTDirectEventBlock?
     @objc var onAdDisplayed: RCTDirectEventBlock?
     @objc var onAdFailed: RCTDirectEventBlock?
+    @objc var onAdSourceFailed: RCTDirectEventBlock?
     @objc var onAdClicked: RCTDirectEventBlock?
     @objc var onAdClosed: RCTDirectEventBlock?
     @objc var onAdRewardEarned: RCTDirectEventBlock?
@@ -149,16 +312,27 @@ class VeonPrebidReactNativeView: UIView {
     }
 
     private func cleanupAds() {
-        bannerAdUnit?.stopAutoRefresh()
-        bannerAdUnit = nil
-        prebidBannerView?.delegate = nil
-        prebidBannerView = nil
-        gamBanner?.delegate = nil
-        gamBanner = nil
-        prebidInterstitial?.delegate = nil
-        prebidInterstitial = nil
+        NSLayoutConstraint.deactivate(bannerConstraints)
+        bannerConstraints.removeAll()
+        loadedBannerView?.removeFromSuperview()
+        loadedBannerView = nil
+        bannerLoader?.delegate = nil
+        bannerLoader?.destroy()
+        bannerLoader = nil
+        retiringBannerLoader?.delegate = nil
+        retiringBannerLoader?.destroy()
+        retiringBannerLoader = nil
+        auctionPaused = false
+        interstitialLoader?.delegate = nil
+        interstitialLoader?.destroy()
+        interstitialLoader = nil
         rewardedAdUnit?.delegate = nil
         rewardedAdUnit = nil
+        rewardedSource = nil
+        rewardedPrebidUnavailable = false
+        rewardedGamFailed = false
+        bannerSourceErrors.removeAll()
+        interstitialSourceErrors.removeAll()
     }
 
     // MARK: - Configuration
@@ -184,27 +358,64 @@ class VeonPrebidReactNativeView: UIView {
         }
 
         NSLog("VeonPrebid iOS: Loading banner")
-        loadGamBanner(configId: configId, adUnitId: adUnitId)
+        bannerSourceErrors.removeAll()
+        if loadedBannerView?.superview != nil {
+            // Keep the displayed ad alive until its replacement wins the race.
+            if retiringBannerLoader == nil {
+                retiringBannerLoader = bannerLoader
+            } else {
+                bannerLoader?.delegate = nil
+                bannerLoader?.destroy()
+            }
+        } else {
+            loadedBannerView?.removeFromSuperview()
+            loadedBannerView = nil
+            bannerLoader?.delegate = nil
+            bannerLoader?.destroy()
+        }
+        let size = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
+        bannerLoader = VeonMultiBannerAdLoader(
+            rootViewController: getRootViewController(),
+            adSize: size,
+            refreshInterval: auctionPaused ? nil : adParameters.refreshInterval,
+            configId: configId,
+            gamAdUnitId: adUnitId,
+            yandexAdUnitId: nil
+        )
+        bannerLoader?.delegate = self
+        bannerLoader?.loadAd()
     }
 
     @objc func showBanner() {
         NSLog("VeonPrebid iOS: Showing banner")
-        if let gamBanner = gamBanner {
-            addGamBannerViewToView(gamBanner)
-        }
-        if let prebidBannerView = prebidBannerView {
-            addPrebidBannerViewToView(prebidBannerView)
-        }
+        guard let container, let loadedBannerView else { return }
+        guard loadedBannerView.superview !== container else { return }
+        NSLayoutConstraint.deactivate(bannerConstraints)
+        bannerConstraints.removeAll()
+        loadedBannerView.removeFromSuperview()
+        loadedBannerView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(loadedBannerView)
+        bannerConstraints = [
+            loadedBannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            loadedBannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            loadedBannerView.widthAnchor.constraint(equalToConstant: CGFloat(adParameters.bannerWidth)),
+            loadedBannerView.heightAnchor.constraint(equalToConstant: CGFloat(adParameters.bannerHeight))
+        ]
+        NSLayoutConstraint.activate(bannerConstraints)
     }
 
     @objc func hideBanner() {
         NSLog("VeonPrebid iOS: Hiding banner")
-        prebidBannerView?.removeFromSuperview()
-        gamBanner?.removeFromSuperview()
-        prebidBannerView?.delegate = nil
-        prebidBannerView = nil
-        gamBanner?.delegate = nil
-        gamBanner = nil
+        NSLayoutConstraint.deactivate(bannerConstraints)
+        bannerConstraints.removeAll()
+        loadedBannerView?.removeFromSuperview()
+        loadedBannerView = nil
+        bannerLoader?.delegate = nil
+        bannerLoader?.destroy()
+        bannerLoader = nil
+        retiringBannerLoader?.delegate = nil
+        retiringBannerLoader?.destroy()
+        retiringBannerLoader = nil
     }
 
     @objc func loadInterstitial() {
@@ -215,25 +426,33 @@ class VeonPrebidReactNativeView: UIView {
         }
 
         NSLog("VeonPrebid iOS: Loading interstitial")
-        loadInterstitialRendering(configId: configId, adUnitId: adUnitId)
+        interstitialSourceErrors.removeAll()
+        interstitialLoader?.delegate = nil
+        interstitialLoader?.destroy()
+        interstitialLoader = VeonMultiInterstitialAdLoader(
+            configId: configId, gamAdUnitId: adUnitId, yandexAdUnitId: nil
+        )
+        interstitialLoader?.delegate = self
+        interstitialLoader?.loadAd()
     }
 
     @objc func showInterstitial() {
         NSLog("VeonPrebid iOS: Showing interstitial")
 
-        guard let prebidInterstitial = prebidInterstitial else {
+        guard let interstitialLoader, interstitialLoader.isReady else {
             emitFailure("No interstitial loaded yet")
             return
         }
         let rootViewController = getRootViewController()
         let controllerToPresent = rootViewController.presentedViewController ?? rootViewController
-        prebidInterstitial.show(from: controllerToPresent)
+        interstitialLoader.show(from: controllerToPresent)
     }
 
     @objc func hideInterstitial() {
         NSLog("VeonPrebid iOS: Hiding interstitial")
-        prebidInterstitial?.delegate = nil
-        prebidInterstitial = nil
+        interstitialLoader?.delegate = nil
+        interstitialLoader?.destroy()
+        interstitialLoader = nil
     }
 
     @objc func loadRewarded() {
@@ -261,12 +480,14 @@ class VeonPrebidReactNativeView: UIView {
 
     @objc func pauseAuction() {
         NSLog("VeonPrebid iOS: Pausing auction")
-        prebidBannerView?.stopRefresh()
+        auctionPaused = true
+        (loadedBannerView as? PrebidMobile.BannerView)?.stopRefresh()
     }
 
     @objc func resumeAuction() {
         NSLog("VeonPrebid iOS: Resuming auction")
-        prebidBannerView?.refreshInterval = adParameters.refreshInterval
+        auctionPaused = false
+        (loadedBannerView as? PrebidMobile.BannerView)?.refreshInterval = adParameters.refreshInterval
     }
 
     @objc func destroyAuction() {
@@ -275,86 +496,48 @@ class VeonPrebidReactNativeView: UIView {
         container?.subviews.forEach { $0.removeFromSuperview() }
     }
 
-    // MARK: - Banner Loading
-
-    private func loadGamBanner(configId: String, adUnitId: String) {
-        let adSize = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
-
-        guard gamBanner == nil else {
-            NSLog("VeonPrebid iOS: GAM Banner already exists")
-            return
-        }
-
-        // Store as property so it stays alive for auto-refresh
-        bannerAdUnit = BannerAdUnit(configId: configId, size: adSize)
-
-        // Configure banner parameters
-        let parameters = BannerParameters()
-        parameters.api = [Signals.Api.MRAID_2]
-        bannerAdUnit?.bannerParameters = parameters
-        bannerAdUnit?.setAutoRefreshMillis(time: adParameters.refreshInterval * 1000)
-
-        // Create a GAMBannerView
-        gamBanner = AdManagerBannerView(adSize: adSizeFor(cgSize: adSize))
-        gamBanner?.adUnitID = adUnitId
-        gamBanner?.delegate = self
-        gamBanner?.rootViewController = getRootViewController()
-
-        // Make a bid request to Prebid Server
-        let gamRequest = AdManagerRequest()
-        bannerAdUnit?.fetchDemand(adObject: gamRequest) { [weak self] resultCode in
-            guard let self = self, let gamBanner = self.gamBanner else { return }
-            NSLog("VeonPrebid iOS: Prebid demand fetch for GAM - \(resultCode.name())")
-
-            // Load GAM Ad
-            gamBanner.load(gamRequest)
-        }
-    }
-
-    internal func loadPrebidBanner() {
-        let adSize = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
-
-        guard prebidBannerView == nil,
-              let configId = adParameters.configId else {
-            return
-        }
-
-        prebidBannerView = BannerView(
-            frame: CGRect(origin: .zero, size: adSize),
-            configID: configId,
-            adSize: adSize
-        )
-
-        // Configure the BannerView
-        prebidBannerView?.delegate = self
-        prebidBannerView?.adFormat = .banner
-        prebidBannerView?.refreshInterval = adParameters.refreshInterval
-
-        // Load the banner ad
-        prebidBannerView?.loadAd()
-    }
-
-    // MARK: - Interstitial Loading
-
-    private func loadInterstitialRendering(configId: String, adUnitId: String) {
-        let eventHandler = GAMInterstitialEventHandler(adUnitID: adUnitId)
-        let size = CGSize(width: adParameters.bannerWidth, height: adParameters.bannerHeight)
-
-        prebidInterstitial = InterstitialRenderingAdUnit(
-            configID: configId,
-            minSizePercentage: size,
-            eventHandler: eventHandler
-        )
-        prebidInterstitial?.delegate = self
-        prebidInterstitial?.loadAd()
-    }
+    // MARK: - Rewarded Loading
 
     private func loadRewardVideo(configId: String, adUnitId: String) {
         // Detach any prior delegate to prevent in-flight callbacks from a stale unit
         rewardedAdUnit?.delegate = nil
         rewardedAdUnit = nil
 
-        let eventHandler = GAMRewardedAdEventHandler(adUnitID: adUnitId)
+        rewardedSource = nil
+        rewardedPrebidUnavailable = false
+        rewardedGamFailed = false
+
+        let eventHandler = ReactNativeRewardedEventHandler(
+            adUnitId: adUnitId,
+            onSourceSelected: { [weak self] source in
+                self?.rewardedSource = source
+                NSLog("VeonPrebid iOS: Rewarded source selected - \(source)")
+            },
+            onPrebidUnavailable: { [weak self] message in
+                guard let self else { return }
+                self.rewardedPrebidUnavailable = true
+                self.emitSourceFailure(message, sdkType: "prebid")
+                NSLog("VeonPrebid iOS: Prebid rewarded unavailable - \(message)")
+            },
+            onGamFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.rewardedGamFailed = true
+                let message = error?.localizedDescription ?? "Unknown GAM error"
+                self.emitSourceFailure(message, sdkType: "gam")
+                NSLog("VeonPrebid iOS: GAM rewarded failed - \(message)")
+            },
+            onGamImpression: { [weak self] in
+                guard let self else { return }
+                self.onAdDisplayed?([
+                    "configId": configId,
+                    "adUnitId": adUnitId,
+                    "sdkType": "gam"
+                ])
+            },
+            onPresentationFailure: { [weak self] error in
+                self?.emitFailure(error.localizedDescription)
+            }
+        )
         rewardedAdUnit = RewardedAdUnit(configID: configId, eventHandler: eventHandler)
         rewardedAdUnit?.delegate = self
         rewardedAdUnit?.loadAd()
@@ -365,7 +548,16 @@ class VeonPrebidReactNativeView: UIView {
     /// Emits onAdFailed to JS with a developer-supplied error message, so JS callers
     /// see a feedback event for validation/state failures (missing params, no ad ready, etc.)
     /// instead of a silent no-op.
-    private func emitFailure(_ message: String) {
+    func emitSourceFailure(_ message: String, sdkType: String) {
+        onAdSourceFailed?([
+            "configId": adParameters.configId ?? "",
+            "adUnitId": adParameters.adUnitId ?? "",
+            "error": message,
+            "sdkType": sdkType
+        ])
+    }
+
+    func emitFailure(_ message: String) {
         NSLog("VeonPrebid iOS: \(message)")
         onAdFailed?([
             "configId": adParameters.configId ?? "",
@@ -380,30 +572,6 @@ class VeonPrebidReactNativeView: UIView {
             return rootViewController
         }
         return UIViewController()
-    }
-
-    private func addGamBannerViewToView(_ bannerView: AdManagerBannerView) {
-        guard let container = container else { return }
-        bannerView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(bannerView)
-
-        NSLayoutConstraint.activate([
-            bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            bannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
-    }
-
-    private func addPrebidBannerViewToView(_ bannerView: PrebidMobile.BannerView) {
-        guard let container = container else { return }
-        bannerView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(bannerView)
-
-        NSLayoutConstraint.activate([
-            bannerView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 5),
-            bannerView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -5),
-            bannerView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            bannerView.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
     }
 
 }

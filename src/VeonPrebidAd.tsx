@@ -22,6 +22,7 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
       onAdLoaded,
       onAdDisplayed,
       onAdFailed,
+      onAdSourceFailed,
       onAdClicked,
       onAdClosed,
       onAdRewardEarned,
@@ -97,6 +98,15 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
       [onAdFailed]
     );
 
+    const handleAdSourceFailed = useCallback(
+      (event: any) => {
+        const data: AdEventData = event.nativeEvent;
+        console.warn('Ad source failed:', data.error, `SDK: ${data.sdkType}`);
+        onAdSourceFailed?.(data);
+      },
+      [onAdSourceFailed]
+    );
+
     const handleAdClicked = useCallback(
       (event: any) => {
         const data: AdEventData = event.nativeEvent;
@@ -146,6 +156,7 @@ const VeonPrebidAd = forwardRef<AdController, VeonPrebidAdProps>(
           onAdLoaded={handleAdLoaded}
           onAdDisplayed={handleAdDisplayed}
           onAdFailed={handleAdFailed}
+          onAdSourceFailed={handleAdSourceFailed}
           onAdClicked={handleAdClicked}
           onAdClosed={handleAdClosed}
           onAdRewardEarned={handleAdRewardEarned}

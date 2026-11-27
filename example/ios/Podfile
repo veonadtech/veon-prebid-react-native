@@ -21,11 +21,25 @@ target 'VeonPrebidReactNativeExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  target 'VeonPrebidReactNativeExampleTests' do
+    inherit! :search_paths
+  end
+
   post_install do |installer|
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
     )
+
+    # fmt 11.0.2 (pinned by React Native 0.81) fails its C++20 consteval
+    # format checks with Xcode 26. Compile this pod as C++17 until RN updates fmt.
+    installer.pods_project.targets.each do |pod_target|
+      next unless pod_target.name == 'fmt'
+
+      pod_target.build_configurations.each do |build_configuration|
+        build_configuration.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
   end
 end

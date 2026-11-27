@@ -2,6 +2,8 @@ import Foundation
 import React
 import PrebidMobile
 import GoogleMobileAds
+import VeonPrebidMultiAdLoaderGAM
+import VeonPrebidRemoteConfig
 
 @objc(VeonPrebidReactNativeModule)
 class VeonPrebidReactNativeModule: RCTEventEmitter {
@@ -66,6 +68,7 @@ class VeonPrebidReactNativeModule: RCTEventEmitter {
             Prebid.shared.timeoutMillis = timeoutMillis.intValue
             Prebid.shared.pbsDebug = pbsDebug
             Prebid.shared.shareGeoLocation = true
+            VeonGAMAdSourceProvider.register()
 
             if let bundleIdentifier = Bundle.main.bundleIdentifier {
                 Targeting.shared.sourceapp = bundleIdentifier
@@ -104,6 +107,7 @@ class VeonPrebidReactNativeModule: RCTEventEmitter {
             do {
                 try Prebid.initializeSDK(
                     serverURL: prebidHost,
+                    configURL: configHost,
                     gadMobileAdsVersion: string(for: MobileAds.shared.versionNumber)
                 ) { status, error in
                     DispatchQueue.main.async {

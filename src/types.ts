@@ -23,6 +23,7 @@ export interface VeonPrebidViewProps {
   onAdFailed?: (event: {
     nativeEvent: { adId?: string; sdk?: string; message?: string };
   }) => void;
+  onAdSourceFailed?: (event: { nativeEvent: AdEventData }) => void;
   onAdClicked?: (event: {
     nativeEvent: { adId?: string; sdk?: string; message?: string };
   }) => void;
@@ -72,6 +73,8 @@ export interface VeonPrebidAdProps {
   onAdLoaded?: (data: AdEventData) => void;
   onAdDisplayed?: (data: AdEventData) => void;
   onAdFailed?: (data: AdEventData) => void;
+  /** A single ad source failed; another source may still load the ad. */
+  onAdSourceFailed?: (data: AdEventData) => void;
   onAdClicked?: (data: AdEventData) => void;
   onAdClosed?: (data: AdEventData) => void;
   onAdRewardEarned?: (data: RewardData) => void;

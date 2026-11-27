@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -33,6 +33,67 @@ export default function App() {
 
   // Rewarded ad refs
   const rewardedAdRef = useRef<AdController>(null);
+  const pendingRewardRef = useRef<RewardData | null>(null);
+  const rewardedClosedRef = useRef(false);
+  const sourceFailureSeenRef = useRef({
+    banner: false,
+    interstitial: false,
+    rewarded: false,
+  });
+  const alertQueueRef = useRef<Array<{ title: string; message: string }>>([]);
+  const alertVisibleRef = useRef(false);
+
+  // Native callbacks can arrive together. Show every message in its own dialog.
+  const showNextAlert = useCallback(function showNextAlert() {
+    if (alertVisibleRef.current) return;
+    const next = alertQueueRef.current.shift();
+    if (!next) return;
+    alertVisibleRef.current = true;
+    let dismissed = false;
+    const onDismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      alertVisibleRef.current = false;
+      setTimeout(showNextAlert, 150);
+    };
+    Alert.alert(
+      next.title,
+      next.message,
+      [{ text: 'OK', onPress: onDismiss }],
+      { onDismiss }
+    );
+  }, []);
+
+  const queueAlert = useCallback(
+    (title: string, message: string) => {
+      alertQueueRef.current.push({ title, message });
+      showNextAlert();
+    },
+    [showNextAlert]
+  );
+
+  const showSourceError = (
+    format: 'banner' | 'interstitial' | 'rewarded',
+    data: AdEventData
+  ) => {
+    sourceFailureSeenRef.current[format] = true;
+    const source = data.sdkType?.toUpperCase() ?? 'UNKNOWN';
+    queueAlert(`${format} ${source} Error`, data.error ?? 'Unknown error');
+  };
+
+  const showFinalError = (
+    format: 'banner' | 'interstitial' | 'rewarded',
+    data: AdEventData
+  ) => {
+    if (sourceFailureSeenRef.current[format]) {
+      sourceFailureSeenRef.current[format] = false;
+      return;
+    }
+    queueAlert(
+      `${format} Error`,
+      `${data.error ?? 'Unknown error'}\n\nSDK: ${data.sdkType ?? 'unknown'}`
+    );
+  };
 
   /**
    * Initialize Prebid SDK on mount
@@ -51,7 +112,7 @@ export default function App() {
         });
 
         setSdkInitialized(true);
-        Alert.alert('Success', 'Prebid SDK initialized successfully');
+        queueAlert('Success', 'Prebid SDK initialized successfully');
 
         // Get SDK version
         const version = await VeonPrebidSDK.getInstance().getSDKVersion();
@@ -59,25 +120,29 @@ export default function App() {
         console.log('SDK Version:', version);
       } catch (error) {
         console.error('Failed to initialize SDK:', error);
-        Alert.alert('Error', 'Failed to initialize Prebid SDK');
+        queueAlert('Error', 'Failed to initialize Prebid SDK');
       }
     };
 
     initializeSDK();
-  }, []);
+  }, [queueAlert]);
 
   /**
    * Banner Ad Event Handlers
    */
   const handleBannerLoaded = (data: AdEventData) => {
     console.log('Banner loaded:', data);
-    Alert.alert('Banner', `Ad loaded from ${data.sdkType}`);
+    sourceFailureSeenRef.current.banner = false;
+    queueAlert('Banner', `Ad loaded from ${data.sdkType}`);
   };
 
   const handleBannerFailed = (data: AdEventData) => {
     console.error('Banner failed:', data.error, `SDK: ${data.sdkType}`);
-    Alert.alert('Banner Error', `${data.error}\n\nSDK: ${data.sdkType}`);
+    showFinalError('banner', data);
   };
+
+  const handleBannerSourceFailed = (data: AdEventData) =>
+    showSourceError('banner', data);
 
   const handleBannerClicked = (data: AdEventData) => {
     console.log('Banner clicked:', data);
@@ -88,17 +153,21 @@ export default function App() {
    */
   const handleInterstitialLoaded = (data: AdEventData) => {
     console.log('Interstitial loaded:', data);
-    Alert.alert('Interstitial', `Ad loaded from ${data.sdkType}`);
+    sourceFailureSeenRef.current.interstitial = false;
+    queueAlert('Interstitial', `Ad loaded from ${data.sdkType}`);
   };
 
   const handleInterstitialFailed = (data: AdEventData) => {
     console.error('Interstitial failed:', data.error, `SDK: ${data.sdkType}`);
-    Alert.alert('Interstitial Error', `${data.error}\n\nSDK: ${data.sdkType}`);
+    showFinalError('interstitial', data);
   };
+
+  const handleInterstitialSourceFailed = (data: AdEventData) =>
+    showSourceError('interstitial', data);
 
   const handleInterstitialClosed = (data: AdEventData) => {
     console.log('Interstitial closed:', data);
-    Alert.alert('Interstitial', 'Ad closed');
+    queueAlert('Interstitial', 'Ad closed');
   };
 
   /**
@@ -106,7 +175,8 @@ export default function App() {
    */
   const handleRewardedLoaded = (data: AdEventData) => {
     console.log('Rewarded loaded:', data);
-    Alert.alert(
+    sourceFailureSeenRef.current.rewarded = false;
+    queueAlert(
       'Rewarded',
       `Ad loaded from ${data.sdkType}. Tap "Show Rewarded" to play.`
     );
@@ -114,19 +184,36 @@ export default function App() {
 
   const handleRewardedFailed = (data: AdEventData) => {
     console.error('Rewarded failed:', data.error, `SDK: ${data.sdkType}`);
-    Alert.alert('Rewarded Error', `${data.error}\n\nSDK: ${data.sdkType}`);
+    showFinalError('rewarded', data);
   };
+
+  const handleRewardedSourceFailed = (data: AdEventData) =>
+    showSourceError('rewarded', data);
 
   const handleRewardedClosed = (data: AdEventData) => {
     console.log('Rewarded closed:', data);
+    rewardedClosedRef.current = true;
+    const reward = pendingRewardRef.current;
+    if (reward) {
+      pendingRewardRef.current = null;
+      setTimeout(() => showRewardAlert(reward), 200);
+    }
+  };
+
+  const showRewardAlert = (data: RewardData) => {
+    queueAlert(
+      'Reward Earned!',
+      `Type: ${data.rewardType || '(none)'}\nAmount: ${data.rewardAmount ?? 0}`
+    );
   };
 
   const handleRewardEarned = (data: RewardData) => {
     console.log('Reward earned:', data);
-    Alert.alert(
-      'Reward Earned!',
-      `Type: ${data.rewardType || '(none)'}\nAmount: ${data.rewardAmount ?? 0}`
-    );
+    if (rewardedClosedRef.current) {
+      showRewardAlert(data);
+    } else {
+      pendingRewardRef.current = data;
+    }
   };
 
   /**
@@ -134,6 +221,7 @@ export default function App() {
    */
   const loadBanner = () => {
     console.log('Loading banner...');
+    sourceFailureSeenRef.current.banner = false;
     bannerAdRef.current?.loadBanner();
   };
 
@@ -152,6 +240,7 @@ export default function App() {
    */
   const loadInterstitial = () => {
     console.log('Loading interstitial...');
+    sourceFailureSeenRef.current.interstitial = false;
     interstitialAdRef.current?.loadInterstitial();
   };
 
@@ -164,7 +253,10 @@ export default function App() {
    * Rewarded Ad Controls
    */
   const loadRewarded = () => {
+    pendingRewardRef.current = null;
+    rewardedClosedRef.current = false;
     console.log('Loading rewarded...');
+    sourceFailureSeenRef.current.rewarded = false;
     rewardedAdRef.current?.loadRewarded();
   };
 
@@ -209,6 +301,7 @@ export default function App() {
                   refreshInterval={30}
                   onAdLoaded={handleBannerLoaded}
                   onAdFailed={handleBannerFailed}
+                  onAdSourceFailed={handleBannerSourceFailed}
                   onAdClicked={handleBannerClicked}
                   style={styles.bannerAd}
                 />
@@ -235,6 +328,7 @@ export default function App() {
                 adUnitId="ca-app-pub-3940256099942544/1033173712" // Replace with your ad unit ID
                 onAdLoaded={handleInterstitialLoaded}
                 onAdFailed={handleInterstitialFailed}
+                onAdSourceFailed={handleInterstitialSourceFailed}
                 onAdClosed={handleInterstitialClosed}
               />
 
@@ -256,6 +350,7 @@ export default function App() {
                 adUnitId="ca-app-pub-3940256099942544/5224354917" // Replace with your ad unit ID
                 onAdLoaded={handleRewardedLoaded}
                 onAdFailed={handleRewardedFailed}
+                onAdSourceFailed={handleRewardedSourceFailed}
                 onAdClosed={handleRewardedClosed}
                 onAdRewardEarned={handleRewardEarned}
               />

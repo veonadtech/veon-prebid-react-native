@@ -356,6 +356,35 @@ describe('VeonPrebidAd', () => {
       );
     });
 
+    it('forwards a source failure separately from final ad failure', () => {
+      const onAdSourceFailed = jest.fn();
+      const onAdFailed = jest.fn();
+      const { getByTestId } = render(
+        <VeonPrebidAd
+          adType="banner"
+          configId="test"
+          adUnitId="/test/unit"
+          width={320}
+          height={50}
+          onAdSourceFailed={onAdSourceFailed}
+          onAdFailed={onAdFailed}
+        />
+      );
+
+      const nativeView = getByTestId('native-view');
+      act(() => {
+        nativeView.props.onAdSourceFailed({
+          nativeEvent: { error: 'No fill', sdkType: 'prebid' },
+        });
+      });
+
+      expect(onAdSourceFailed).toHaveBeenCalledWith({
+        error: 'No fill',
+        sdkType: 'prebid',
+      });
+      expect(onAdFailed).not.toHaveBeenCalled();
+    });
+
     it('should call onAdClicked when native emits click event', () => {
       const onAdClicked = jest.fn();
       const { getByTestId } = render(
