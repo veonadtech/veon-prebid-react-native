@@ -184,12 +184,13 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
     // MARK: - Event blocks exist as KVC-settable properties
 
     func testEventBlocksSettableViaKVC() {
-        let block: RCTDirectEventBlock = { _ in }
+        let block: @convention(block) (NSDictionary) -> Void = { _ in }
 
         // Should not crash — these are the exact keys Fabric ComponentView uses
         view.setValue(block, forKey: "onAdLoaded")
         view.setValue(block, forKey: "onAdDisplayed")
         view.setValue(block, forKey: "onAdFailed")
+        view.setValue(block, forKey: "onAdSourceFailed")
         view.setValue(block, forKey: "onAdClicked")
         view.setValue(block, forKey: "onAdClosed")
         view.setValue(block, forKey: "onAdRewardEarned")
@@ -250,13 +251,15 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         XCTAssertEqual(events.first?["rewardAmount"] as? Int, 5)
     }
 
-    func testMultiBannerLoaderForwardsWinningSourceAndSourceFailure() {
+    func testMultiBannerLoaderDoesNotReportPartialFailure() {
         view.adParameters.configId = "banner-config"
         view.adParameters.adUnitId = "/network/banner"
         var loadedSource: String?
         var failedSource: String?
+        var sourceFailure: [AnyHashable: Any]?
         view.onAdLoaded = { loadedSource = $0?["sdkType"] as? String }
         view.onAdFailed = { failedSource = $0?["sdkType"] as? String }
+        view.onAdSourceFailed = { sourceFailure = $0 }
 
         let loader = VeonMultiBannerAdLoader(
             rootViewController: nil, adSize: CGSize(width: 320, height: 50),
@@ -268,7 +271,9 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         let banner = UIView()
         view.bannerLoader(loader, didLoad: banner, from: .gam)
 
-        XCTAssertEqual(failedSource, "prebid")
+        XCTAssertNil(failedSource)
+        XCTAssertEqual(sourceFailure?["sdkType"] as? String, "prebid")
+        XCTAssertEqual(sourceFailure?["error"] as? String, "Unknown error")
         XCTAssertEqual(loadedSource, "gam")
         XCTAssertTrue(view.loadedBannerView === banner)
     }
@@ -326,13 +331,44 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         XCTAssertNil(view.retiringBannerLoader)
     }
 
-    func testMultiInterstitialLoaderForwardsWinningSourceAndSourceFailure() {
+    func testBannerReportsFailureOnlyWhenAllSourcesFail() {
+        view.adParameters.configId = "banner-config"
+        view.adParameters.adUnitId = "/network/banner"
+        var failures = 0
+        view.onAdFailed = { _ in failures += 1 }
+        let loader = VeonMultiBannerAdLoader(
+            rootViewController: nil, adSize: CGSize(width: 320, height: 50),
+            refreshInterval: 30, configId: "banner-config",
+            gamAdUnitId: "/network/banner", yandexAdUnitId: nil
+        )
+        view.bannerLoader = loader
+        view.bannerLoader(loader, didFailToLoad: .prebid, error: nil)
+        XCTAssertEqual(failures, 0)
+        view.bannerLoaderDidFailAll(loader)
+        XCTAssertEqual(failures, 1)
+    }
+
+    func testRetiringBannerStillReportsClick() {
+        let oldLoader = VeonMultiBannerAdLoader(
+            rootViewController: nil, adSize: CGSize(width: 320, height: 50),
+            refreshInterval: 30, configId: "old", gamAdUnitId: "old", yandexAdUnitId: nil
+        )
+        var clicks = 0
+        view.onAdClicked = { _ in clicks += 1 }
+        view.retiringBannerLoader = oldLoader
+        view.bannerLoader(oldLoader, didRecordClickFrom: .prebid)
+        XCTAssertEqual(clicks, 1)
+    }
+
+    func testMultiInterstitialLoaderDoesNotReportPartialFailure() {
         view.adParameters.configId = "interstitial-config"
         view.adParameters.adUnitId = "/network/interstitial"
         var loadedSource: String?
         var failedSource: String?
+        var sourceFailure: [AnyHashable: Any]?
         view.onAdLoaded = { loadedSource = $0?["sdkType"] as? String }
         view.onAdFailed = { failedSource = $0?["sdkType"] as? String }
+        view.onAdSourceFailed = { sourceFailure = $0 }
 
         let loader = VeonMultiInterstitialAdLoader(
             configId: "interstitial-config", gamAdUnitId: "/network/interstitial",
@@ -342,8 +378,24 @@ class VeonPrebidReactNativeViewTests: XCTestCase {
         view.interstitialLoader(loader, didFailToLoad: .gam, error: nil)
         view.interstitialLoader(loader, didLoadFrom: .prebid)
 
-        XCTAssertEqual(failedSource, "gam")
+        XCTAssertNil(failedSource)
+        XCTAssertEqual(sourceFailure?["sdkType"] as? String, "gam")
+        XCTAssertEqual(sourceFailure?["error"] as? String, "Unknown error")
         XCTAssertEqual(loadedSource, "prebid")
+    }
+
+    func testInterstitialReportsFailureOnlyWhenAllSourcesFail() {
+        var failures = 0
+        view.onAdFailed = { _ in failures += 1 }
+        let loader = VeonMultiInterstitialAdLoader(
+            configId: "interstitial-config", gamAdUnitId: "/network/interstitial",
+            yandexAdUnitId: nil
+        )
+        view.interstitialLoader = loader
+        view.interstitialLoader(loader, didFailToLoad: .gam, error: nil)
+        XCTAssertEqual(failures, 0)
+        view.interstitialLoaderDidFailAll(loader)
+        XCTAssertEqual(failures, 1)
     }
 
     // MARK: - DestroyAuction cleanup

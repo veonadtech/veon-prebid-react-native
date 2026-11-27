@@ -9,6 +9,7 @@ extension VeonPrebidReactNativeView: VeonMultiBannerAdLoaderDelegate {
 
     func bannerLoader(_ loader: VeonMultiBannerAdLoader, didLoad view: UIView, from sdk: SdkType) {
         guard bannerLoader === loader else { return }
+        bannerSourceErrors.removeAll()
         let wasVisible = loadedBannerView?.superview != nil
         loadedBannerView?.removeFromSuperview()
         retiringBannerLoader?.delegate = nil
@@ -29,24 +30,26 @@ extension VeonPrebidReactNativeView: VeonMultiBannerAdLoaderDelegate {
         guard bannerLoader === loader else { return }
         let message = error?.localizedDescription ?? "Unknown error"
         NSLog("VeonPrebid iOS: Banner failed from \(sdk.rawValue): \(message)")
-        onAdFailed?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": adParameters.adUnitId ?? "",
-            "error": message,
-            "sdkType": sdk.rawValue.lowercased()
-        ])
+        bannerSourceErrors.append(message)
+        emitSourceFailure(message, sdkType: sdk.rawValue.lowercased())
     }
 
     func bannerLoaderDidFailAll(_ loader: VeonMultiBannerAdLoader) {
-        guard bannerLoader === loader, let retiringBannerLoader else { return }
-        loader.delegate = nil
-        loader.destroy()
-        bannerLoader = retiringBannerLoader
-        self.retiringBannerLoader = nil
+        guard bannerLoader === loader else { return }
+        if let retiringBannerLoader {
+            loader.delegate = nil
+            loader.destroy()
+            bannerLoader = retiringBannerLoader
+            self.retiringBannerLoader = nil
+        } else {
+            emitFailure(bannerSourceErrors.joined(separator: "; ").isEmpty
+                ? "All banner sources failed" : bannerSourceErrors.joined(separator: "; "))
+        }
+        bannerSourceErrors.removeAll()
     }
 
     func bannerLoader(_ loader: VeonMultiBannerAdLoader, didRecordImpressionFrom sdk: SdkType) {
-        guard bannerLoader === loader else { return }
+        guard bannerLoader === loader || retiringBannerLoader === loader else { return }
         onAdDisplayed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
@@ -55,17 +58,17 @@ extension VeonPrebidReactNativeView: VeonMultiBannerAdLoaderDelegate {
     }
 
     func bannerLoader(_ loader: VeonMultiBannerAdLoader, didRecordClickFrom sdk: SdkType) {
-        guard bannerLoader === loader else { return }
+        guard bannerLoader === loader || retiringBannerLoader === loader else { return }
         emitBannerClick(from: sdk)
     }
 
     func bannerLoader(_ loader: VeonMultiBannerAdLoader, willLeaveApplication sdk: SdkType) {
-        guard bannerLoader === loader else { return }
+        guard bannerLoader === loader || retiringBannerLoader === loader else { return }
         emitBannerClick(from: sdk)
     }
 
     func bannerLoader(_ loader: VeonMultiBannerAdLoader, didDismissScreenFrom sdk: SdkType) {
-        guard bannerLoader === loader else { return }
+        guard bannerLoader === loader || retiringBannerLoader === loader else { return }
         onAdClosed?([
             "configId": adParameters.configId ?? "",
             "adUnitId": adParameters.adUnitId ?? "",
@@ -86,6 +89,7 @@ extension VeonPrebidReactNativeView: VeonMultiInterstitialAdLoaderDelegate {
 
     func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, didLoadFrom sdk: SdkType) {
         guard interstitialLoader === loader else { return }
+        interstitialSourceErrors.removeAll()
         NSLog("VeonPrebid iOS: Interstitial loaded from \(sdk.rawValue)")
         onAdLoaded?([
             "configId": adParameters.configId ?? "",
@@ -98,12 +102,15 @@ extension VeonPrebidReactNativeView: VeonMultiInterstitialAdLoaderDelegate {
         guard interstitialLoader === loader else { return }
         let message = error?.localizedDescription ?? "Unknown error"
         NSLog("VeonPrebid iOS: Interstitial failed from \(sdk.rawValue): \(message)")
-        onAdFailed?([
-            "configId": adParameters.configId ?? "",
-            "adUnitId": adParameters.adUnitId ?? "",
-            "error": message,
-            "sdkType": sdk.rawValue.lowercased()
-        ])
+        interstitialSourceErrors.append(message)
+        emitSourceFailure(message, sdkType: sdk.rawValue.lowercased())
+    }
+
+    func interstitialLoaderDidFailAll(_ loader: VeonMultiInterstitialAdLoader) {
+        guard interstitialLoader === loader else { return }
+        emitFailure(interstitialSourceErrors.joined(separator: "; ").isEmpty
+            ? "All interstitial sources failed" : interstitialSourceErrors.joined(separator: "; "))
+        interstitialSourceErrors.removeAll()
     }
 
     func interstitialLoader(_ loader: VeonMultiInterstitialAdLoader, willPresent sdk: SdkType) {
@@ -160,8 +167,6 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
     }
 
     func rewardedAd(_ rewardedAd: RewardedAdUnit, didFailToReceiveAdWithError error: Error?) {
-        // Both source failures were already emitted with their own SDK labels.
-        if rewardedPrebidUnavailable && rewardedGamFailed { return }
         let errorMsg = error?.localizedDescription ?? "Unknown error"
         NSLog("VeonPrebid iOS: Rewarded ad failed to load - \(errorMsg)")
         onAdFailed?([
@@ -186,6 +191,9 @@ extension VeonPrebidReactNativeView: RewardedAdUnitDelegate {
     }
 
     func rewardedAdWillPresentAd(_ rewardedAd: RewardedAdUnit) {
+        // The SDK fires this before asking GAM to present. GAM success is
+        // reported from its impression callback instead.
+        guard rewardedSource != "gam" else { return }
         NSLog("VeonPrebid iOS: Rewarded ad will present")
         onAdDisplayed?([
             "configId": adParameters.configId ?? "",

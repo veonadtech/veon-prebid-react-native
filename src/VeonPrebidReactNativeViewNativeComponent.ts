@@ -54,6 +54,7 @@ export interface NativeProps extends ViewProps {
   onAdLoaded?: DirectEventHandler<AdEventPayload>;
   onAdDisplayed?: DirectEventHandler<AdEventPayload>;
   onAdFailed?: DirectEventHandler<AdEventPayload>;
+  onAdSourceFailed?: DirectEventHandler<AdEventPayload>;
   onAdClicked?: DirectEventHandler<AdEventPayload>;
   onAdClosed?: DirectEventHandler<AdEventPayload>;
   onAdRewardEarned?: DirectEventHandler<RewardEventPayload>;

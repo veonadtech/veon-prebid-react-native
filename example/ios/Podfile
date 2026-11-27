@@ -22,7 +22,7 @@ target 'VeonPrebidReactNativeExample' do
   )
 
   target 'VeonPrebidReactNativeExampleTests' do
-    inherit! :complete
+    inherit! :search_paths
   end
 
   post_install do |installer|

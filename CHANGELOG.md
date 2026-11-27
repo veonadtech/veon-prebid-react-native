@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.6.2
+## 0.7.0
 
 ### Changed
 * Android: upgraded Veon Prebid SDK to 0.5.5 and Kotlin to 2.3.0, which is required to read the SDK's Kotlin metadata.
@@ -9,13 +9,17 @@
 * Updated the example's CocoaPods version and added an Xcode 26 workaround for React Native's `fmt` pod.
 
 ### Added
-* Source-specific Prebid and GAM load diagnostics for iOS interstitial and rewarded ads, and Android rewarded ads. A failure from one source can be followed by a successful load from the other.
+* Added `onAdSourceFailed` for each source-specific failure, including the failing source in `sdkType`. `onAdFailed` remains the final load or presentation failure callback; another source can still load after a source failure.
 * iOS XCTest target and coverage for the native event bridge and rewarded source and reward payload; updated Android and JS event tests.
 
 ### Fixed
 * Rewarded callbacks report the selected ad source instead of inferring it from the presence of a Prebid bid. Android uses an Activity to present a Prebid rewarded creative.
 * Reward notifications are forwarded from the ad SDK's earned-reward callback; the example shows its reward alert after the ad closes.
 * iOS banner, interstitial, and rewarded callbacks now expose the relevant ad source to React Native.
+
+## 0.6.1
+### Changed
+* Maintenance release of 0.6.0 with no public API changes.
 
 ## 0.6.0
 ### Changed

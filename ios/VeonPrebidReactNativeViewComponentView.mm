@@ -159,6 +159,18 @@ using namespace facebook::react;
     };
     [_view setValue:[onAdFailed copy] forKey:@"onAdFailed"];
 
+    void (^onAdSourceFailed)(NSDictionary *) = ^(NSDictionary *event) {
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf && strongSelf->_eventEmitter) {
+            auto emitter = std::static_pointer_cast<const VeonPrebidReactNativeViewEventEmitter>(strongSelf->_eventEmitter);
+            VeonPrebidReactNativeViewEventEmitter::OnAdSourceFailed data;
+            if (event[@"error"]) data.error = std::string([event[@"error"] UTF8String]);
+            if (event[@"sdkType"]) data.sdkType = std::string([event[@"sdkType"] UTF8String]);
+            emitter->onAdSourceFailed(data);
+        }
+    };
+    [_view setValue:[onAdSourceFailed copy] forKey:@"onAdSourceFailed"];
+
     void (^onAdClicked)(NSDictionary *) = ^(NSDictionary *event) {
         __typeof(self) strongSelf = weakSelf;
         if (strongSelf && strongSelf->_eventEmitter) {

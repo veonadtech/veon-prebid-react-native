@@ -157,3 +157,14 @@ jobs:
       - name: Build example for iOS
         run: |
           yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+      - name: Run iOS XCTest
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
+          test "$DEVICE_ID" != "null"
+          xcodebuild test \
+            -workspace example/ios/VeonPrebidReactNativeExample.xcworkspace \
+            -scheme VeonPrebidReactNativeExample \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO

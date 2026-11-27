@@ -7,7 +7,7 @@ A React Native plugin for integrating Veon Prebid SDK with Google Ad Manager (GA
 ✅ **Banner Ads** - Standard and custom sizes
 ✅ **Interstitial Ads** - Full-screen ads
 ✅ **Rewarded Video Ads** - User-rewarded video ads
-✅ **Prebid and GAM Integration** - Reports the ad source and source-specific load failures
+✅ **Prebid and GAM Integration** - Reports the winning ad source and final load failures
 ✅ **Explicit Control** - Manual load/show/hide methods
 ✅ **TypeScript Support** - Full type definitions
 ✅ **React Hooks** - `useVeonPrebidAd` hook for easy integration
@@ -271,7 +271,8 @@ Singleton class for SDK initialization.
 | `refreshInterval` | `number` | ❌ | Refresh interval (30-120 seconds, default: 30) |
 | `onAdLoaded` | `function` | ❌ | Called when ad is loaded |
 | `onAdDisplayed` | `function` | ❌ | Called when ad is displayed |
-| `onAdFailed` | `function` | ❌ | Reports a source failure or a Prebid bid that did not win, with `error` and, when known, `sdkType` |
+| `onAdFailed` | `function` | ❌ | Reports a final load or presentation failure, with `error` and, when known, `sdkType` |
+| `onAdSourceFailed` | `function` | ❌ | Reports each source failure separately with `error` and `sdkType`; another source may still load the ad |
 | `onAdClicked` | `function` | ❌ | Called when ad is clicked |
 | `onAdClosed` | `function` | ❌ | Called when ad is closed |
 | `onAdRewardEarned` | `function` | ❌ | Reports a rewarded ad reward after the SDK confirms it was earned |
